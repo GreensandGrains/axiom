@@ -1,11 +1,17 @@
 CREATE TABLE "ads" (
-	"id" varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"title" text NOT NULL,
+	"id" varchar(191) PRIMARY KEY NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"description" text,
 	"content" text NOT NULL,
-	"image_url" text,
-	"link_url" text,
-	"position" text NOT NULL,
-	"is_active" boolean DEFAULT true,
+	"image_url" varchar(500),
+	"target_url" varchar(500),
+	"link_url" varchar(500),
+	"position" varchar(50) NOT NULL DEFAULT 'sidebar',
+	"is_active" boolean NOT NULL DEFAULT true,
+	"impressions" integer NOT NULL DEFAULT 0,
+	"clicks" integer NOT NULL DEFAULT 0,
+	"budget" decimal(10,2) DEFAULT '0.00',
+	"spent" decimal(10,2) DEFAULT '0.00'
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
