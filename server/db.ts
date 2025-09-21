@@ -19,7 +19,7 @@ let dbName = process.env.DB_NAME;
 if (!dbHost && process.env.DATABASE_URL) {
   const url = new URL(process.env.DATABASE_URL);
   dbHost = url.hostname;
-  dbPort = parseInt(url.port || '3306');
+  dbPort = parseInt(url.port || '6514');
   dbUser = url.username;
   dbPassword = url.password;
   dbName = url.pathname.slice(1); // Remove leading slash
