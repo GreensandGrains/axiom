@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, MapPin, Clock, DollarSign, Users, Briefcase } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import backgroundImage from "@assets/generated_images/mengo-fedorov-forest-snow-parallax.gif";
+import backgroundImage from "@assets/generated_images/469ffdf29086f1f30b6f592d4e0dde85.gif";
 
 interface Job {
   id: string;
