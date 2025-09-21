@@ -53,7 +53,7 @@ declare global {
 
 // Set default Discord Client ID if not provided
 if (!process.env.DISCORD_CLIENT_ID) {
-  process.env.DISCORD_CLIENT_ID = "1372226433191247983";
+  process.env.DISCORD_CLIENT_ID = "1418600262938923220";
 }
 
 const app = express();
@@ -81,7 +81,7 @@ app.set('trust proxy', 1);
 // Cookie-based session middleware for truly persistent login (survives server restarts)
 app.use(cookieSession({
   name: 'smartserve.sid',
-  keys: [process.env.SESSION_SECRET || 'smartserve-static-secret-key-for-persistent-sessions-v1'],
+  keys: [process.env.SESSION_SECRET || 'axiom-static-secret-key-for-persistent-sessions-v1'],
   maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year for truly persistent login
   secure: process.env.NODE_ENV === 'production', // Auto-secure in production
   httpOnly: true, // Better security - prevents XSS attacks  
