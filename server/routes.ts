@@ -1,8 +1,6 @@
 import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import dotenv from "dotenv";
-dotenv.config();
 import { db } from "./db";
 import {
   servers,
@@ -50,9 +48,9 @@ import crypto from "crypto";
 import Stripe from "stripe";
 
 // Initialize Stripe
-const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2023-10-16",
-}) : null;
+});
 
 declare global {
   namespace Express {
@@ -104,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/discord", (req, res) => {
-    const clientId = process.env.DISCORD_CLIENT_ID;
+    const clientId = process.env.DISCORD_CLIENT_ID || "1372226433191247983";
     const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
     const redirectUri = `${protocol}://${req.get('host')}/api/auth/discord/callback`;
     const scope = 'identify email guilds';
@@ -189,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     delete session.oauthTimestamp;
 
     try {
-      const clientId = process.env.DISCORD_CLIENT_ID;
+      const clientId = process.env.DISCORD_CLIENT_ID || "1372226433191247983";
       const clientSecret = process.env.DISCORD_CLIENT_SECRET;
       const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
       const redirectUri = `${protocol}://${req.get('host')}/api/auth/discord/callback`;
@@ -248,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUserByDiscordId(discordUser.id);
 
       // Check if this is the admin user using username
-      const ADMIN_USERNAMES = ['axiom_2401']; // Add more admin usernames here
+      const ADMIN_USERNAMES = ['aetherflux_002']; // Add more admin usernames here
       const isAdminUser = ADMIN_USERNAMES.includes(discordUser.username);
 
       if (!user) {

@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+// Load environment variables first
+dotenv.config();
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -62,7 +66,7 @@ app.use(cookieSession({
   keys: [process.env.SESSION_SECRET || 'smartserve-static-secret-key-for-persistent-sessions-v1'],
   maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year for truly persistent login
   secure: process.env.NODE_ENV === 'production', // Auto-secure in production
-  httpsOnly: true, // Better security - prevents XSS attacks  
+  httpOnly: true, // Better security - prevents XSS attacks  
   sameSite: 'lax', // CSRF protection
   overwrite: true // Allow overwriting
 }));
@@ -168,7 +172,7 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '6042', 10);
+  const port = parseInt(process.env.PORT || '5000', 10);
   server.listen({
     port,
     host: "0.0.0.0",

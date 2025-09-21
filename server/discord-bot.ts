@@ -1,7 +1,7 @@
-import { Client, GatewayIntentBits, Events, SlashCommandBuilder, REST, Routes, EmbedBuilder, ChannelType, PermissionsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder } from 'discord.js';
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 dotenv.config();
 
+import { Client, GatewayIntentBits, Events, SlashCommandBuilder, REST, Routes, EmbedBuilder, ChannelType, PermissionsBitField, ButtonBuilder, ButtonStyle, ActionRowBuilder } from 'discord.js';
 import { storage } from './storage';
 
 const client = new Client({
@@ -208,14 +208,7 @@ client.once('clientReady', async () => {
   console.log(`✅ Discord bot logged in as ${client.user?.tag}!`);
 
   // Register slash commands
-  const token = process.env.DISCORD_BOT_TOKEN;
-    
-  if (!token) {
-    console.error('❌ DISCORD_BOT_TOKEN is not defined in the environment variables.');
-    return;
-  }
-
-  const rest = new REST({ version: '10' }).setToken(token);
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN!);
 
   try {
     console.log('Started refreshing application (/) commands.');
@@ -498,7 +491,7 @@ client.on('interactionCreate', async (interaction) => {
 
         if (isAccepted) {
           // Bot accepted
-          await storage.updateBotStatus(botId, 'accepted', reviewedById);
+          await storage.updateBot(botId, { verified: true });
 
           // Send green embed message
           const embed = new EmbedBuilder()
@@ -518,12 +511,12 @@ client.on('interactionCreate', async (interaction) => {
           // Send bot profile with invite link
           const botProfileEmbed = new EmbedBuilder()
             .setTitle(`Bot Profile: ${bot.name}`)
-            .setDescription(`${bot.description}\n\n**Commands:**\n\`\`\`\n${bot.commands.join('\n')}\n\`\`\`\n**Rating:** ${bot.rating || 'Not rated yet'}`)
+            .setDescription(`${bot.description}`)
             .setColor('#7289DA')
             .addFields(
-              { name: 'Invite Link', value: `[Invite ${bot.name}](https://discord.com/oauth2/authorize?client_id=${bot.clientId}&scope=bot&permissions=8)` }
+              { name: 'Invite Link', value: bot.inviteLink }
             )
-            .setFooter({ text: `Provided by ${bot.ownerUsername || 'Unknown'}` });
+            .setFooter({ text: `Provided by Bot Owner` });
 
           const owner = await client.users.fetch(botOwnerId);
           try {
@@ -534,7 +527,7 @@ client.on('interactionCreate', async (interaction) => {
 
         } else {
           // Bot declined
-          await storage.updateBotStatus(botId, 'declined', reviewedById);
+          await storage.updateBot(botId, { verified: false });
 
           // Send red embed message
           const embed = new EmbedBuilder()
@@ -712,7 +705,7 @@ async function handleBumpCommand(interaction: any) {
       .setColor('#7C3AED')
       .addFields(
         { name: '👥 Members', value: `${interaction.guild.memberCount || 'Unknown'}`, inline: true },
-        { name: '🌐 Server', value: `[Join Now](https://discord.gg/${serverData.inviteCode})`, inline: true }
+        { name: '🌐 Server', value: serverData.inviteLink, inline: true }
       )
       .setThumbnail(interaction.guild.iconURL() || null)
       .setFooter({ text: 'Powered by Smart Serve', iconURL: client.user?.avatarURL() || undefined })
@@ -721,7 +714,7 @@ async function handleBumpCommand(interaction: any) {
     // Send bump to all channels
     for (const channelData of bumpChannels) {
       try {
-        if (channelData.guildId === guildId) continue; // Don't bump to own server
+        if (channelData.serverId === guildId) continue; // Don't bump to own server
 
         const channel = await client.channels.fetch(channelData.channelId);
         if (channel && channel.type === ChannelType.GuildText) {
@@ -947,13 +940,17 @@ async function handleSupportCommand(interaction: any) {
 
   try {
     // Create support ticket in database
-    await storage.createSupportTicket({
-      discordUserId: userId,
-      username: username,
-      message: message,
-      guildName: guildName,
-      status: 'open',
-    });
+    // Get user from database by Discord ID
+    const user = await storage.getUserByDiscordId(userId);
+    if (user) {
+      await storage.createSupportTicket({
+        subject: 'Discord Support Request',
+        category: 'general',
+        description: message,
+        priority: 'medium',
+        userId: user.id
+      });
+    }
 
     // Send confirmation to user
     await interaction.reply({
@@ -1150,7 +1147,7 @@ client.on('guildMemberAdd', async (member) => {
         newBalance: newCoins
       });
     } catch (error) {
-      console.log('Quest notification system not available:', error.message);
+      console.log('Quest notification system not available:', error instanceof Error ? error.message : 'Unknown error');
     }
 
     // Send welcome DM with quest completion notification

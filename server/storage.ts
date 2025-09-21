@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { users, servers, bots, ads, serverJoins, slideshows, events, bumpChannels, reviews, partnerships, serverTemplates, templateProcesses, faqs, supportTickets, contactSubmissions, type User, type InsertUser, type Server, type InsertServer, type Bot, type InsertBot, type Ad, type InsertAd, type ServerJoin, type InsertServerJoin, type Slideshow, type InsertSlideshow, type Event, type InsertEvent, type BumpChannel, type InsertBumpChannel, comments, commentLikes, votes, jobs, type Job, type InsertJob, type Faq, type InsertFaq, type SupportTicket, type InsertSupportTicket, type ContactSubmission, type InsertContactSubmission } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, ilike, like, sql, isNull, count, asc } from 'drizzle-orm';
@@ -1611,6 +1614,10 @@ export class DatabaseStorage implements IStorage {
     const [result] = await this.db.select({ count: sql<number>`count(*)` }).from(bots);
     return result?.count || 0;
   }
+}
+
+if (!db) {
+  throw new Error("Database connection failed. Please check your database credentials in .env file.");
 }
 
 export const storage = new DatabaseStorage(db);

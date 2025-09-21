@@ -1,17 +1,29 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionsBitField } from 'discord.js';
-import mysql from 'mysql2/promise';
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 dotenv.config();
 
+import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder, EmbedBuilder, PermissionsBitField } from 'discord.js';
+import mysql from 'mysql2/promise';
 
-// Database connection configuration - using same config as main app
-const dbConfig = {
-  host: process.env.DB_HOST || 'db2.sillydevelopment.co.uk',
-  user: process.env.DB_USER || 'u77272_CezJ7ZJDoG',
-  password: process.env.DB_PASSWORD || '4R.u8LGwD10VjCh84af=k4Vh',
-  database: process.env.DB_NAME || 's77272_axiom',
+// Database connection configuration for Render deployment
+let dbConfig = {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   port: parseInt(process.env.DB_PORT || '3306'),
 };
+
+// Support for DATABASE_URL (common on Render and other platforms)
+if (!dbConfig.host && process.env.DATABASE_URL) {
+  const url = new URL(process.env.DATABASE_URL);
+  dbConfig = {
+    host: url.hostname,
+    port: parseInt(url.port || '3306'),
+    user: url.username,
+    password: url.password,
+    database: url.pathname.slice(1), // Remove leading slash
+  };
+}
 
 // Create Discord client for second bot
 const client = new Client({
@@ -77,10 +89,16 @@ const commands = [
 
 // Initialize database connection
 async function initDatabase() {
+  // Validate database configuration
+  if (!dbConfig.host || !dbConfig.user || !dbConfig.password || !dbConfig.database) {
+    console.warn('⚠️ Database credentials not configured. Quest bot will run without database features.');
+    return;
+  }
+
   try {
     db = mysql.createPool(dbConfig);
     console.log('✅ Connected to external MySQL database');
-    
+
     // Test connection
     const connection = await db.getConnection();
     await connection.ping();
@@ -95,7 +113,7 @@ async function initDatabase() {
 async function registerCommands() {
   try {
     const rest = new REST({ version: '10' }).setToken(process.env.BOT2_TOKEN!);
-    
+
     console.log('Started refreshing quest bot application (/) commands.');
 
     await rest.put(
@@ -109,7 +127,7 @@ async function registerCommands() {
   }
 }
 
-client.once('clientReady', async () => {
+client.once('ready', async () => {
   console.log(`✅ Quest Bot logged in as ${client.user?.tag}!`);
   await initDatabase();
   await registerCommands();
@@ -152,7 +170,7 @@ client.on('interactionCreate', async (interaction) => {
 
 // Command handlers
 async function handleSetQuestChannel(interaction: any) {
-  if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+  if (!interaction.memberPermissions?.has(PermissionsBitField.Flags.ManageChannels)) {
     await interaction.reply({ content: '❌ You need **Manage Channels** permission to set quest channels.', ephemeral: true });
     return;
   }
@@ -175,7 +193,7 @@ async function handleSetQuestChannel(interaction: any) {
 }
 
 async function handleSetBoostChannel(interaction: any) {
-  if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+  if (!interaction.memberPermissions?.has(PermissionsBitField.Flags.ManageChannels)) {
     await interaction.reply({ content: '❌ You need **Manage Channels** permission to set boost channels.', ephemeral: true });
     return;
   }
@@ -198,14 +216,14 @@ async function handleSetBoostChannel(interaction: any) {
 }
 
 async function handleRemoveQuestChannel(interaction: any) {
-  if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+  if (!interaction.memberPermissions?.has(PermissionsBitField.Flags.ManageChannels)) {
     await interaction.reply({ content: '❌ You need **Manage Channels** permission to remove quest channels.', ephemeral: true });
     return;
   }
 
   const guildId = interaction.guild.id;
   const settings = guildSettings.get(guildId) || {};
-  
+
   if (!settings.questClaimChannelId) {
     await interaction.reply({ content: '❌ No quest channel is currently set.', ephemeral: true });
     return;
@@ -225,14 +243,14 @@ async function handleRemoveQuestChannel(interaction: any) {
 }
 
 async function handleRemoveBoostChannel(interaction: any) {
-  if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageChannels)) {
+  if (!interaction.memberPermissions?.has(PermissionsBitField.Flags.ManageChannels)) {
     await interaction.reply({ content: '❌ You need **Manage Channels** permission to remove boost channels.', ephemeral: true });
     return;
   }
 
   const guildId = interaction.guild.id;
   const settings = guildSettings.get(guildId) || {};
-  
+
   if (!settings.boostChannelId) {
     await interaction.reply({ content: '❌ No boost channel is currently set.', ephemeral: true });
     return;
@@ -281,7 +299,7 @@ async function handleQuestSettings(interaction: any) {
 }
 
 async function handleSetPrefix(interaction: any) {
-  if (!interaction.member.permissions.has(PermissionsBitField.Flags.ManageGuild)) {
+  if (!interaction.memberPermissions?.has(PermissionsBitField.Flags.ManageGuild)) {
     await interaction.reply({ content: '❌ You need **Manage Server** permission to set the command prefix.', ephemeral: true });
     return;
   }
@@ -341,7 +359,7 @@ async function handlePageCommand(message: any, args: string[]) {
   try {
     // Fetch page information from website
     const response = await fetch(`${baseUrl}/api/page-info/${pageName}`);
-    
+
     if (!response.ok) {
       await message.reply(`❌ Page "${pageName}" not found. Available pages: home, servers, bots, store, quests`);
       return;
