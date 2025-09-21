@@ -7,10 +7,6 @@ import { Coins, Zap, Crown, ShoppingCart, ArrowRight } from "lucide-react";
 import Navbar from "@/components/navbar";
 import { Link } from "wouter";
 import backgroundImage from "@assets/generated_images/mengo-fedorov-forest-snow-parallax.gif";
-import dotenv from "dotenv";
-dotenv.config();
-
-const stripePublicKey = process.env.VITE_STRIPE_PUBLIC_KEY;
 
 export default function Store() {
   const { user, isAuthenticated } = useAuth();
@@ -183,22 +179,13 @@ export default function Store() {
                       Priority placement in server listings
                     </p>
                   </div>
-                  {stripePublicKey ? (
-                    <Link href={`/payment/${boost.duration === '24 hours' ? '24hour-boost' : '1month-boost'}?duration=${encodeURIComponent(boost.duration)}&price=${boost.price}`}>
-                      <Button className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 transition-all duration-300 hover:scale-105" data-testid={`button-buy-boost-${boost.duration.replace(' ', '-')}`}>
-                        Purchase - ${boost.price}
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Button
-                      disabled
-                      className="w-full bg-gray-500 cursor-not-allowed"
-                      data-testid={`button-buy-boost-${boost.duration.replace(' ', '-')}`}
-                    >
-                      Payment Not Available
-                    </Button>
-                  )}
+                  <Button
+                    disabled
+                    className="w-full bg-gray-400 cursor-not-allowed"
+                    data-testid={`button-buy-boost-${boost.duration.replace(' ', '-')}`}
+                  >
+                    Coming Soon - ${boost.price}
+                  </Button>
                 </CardContent>
               </Card>
             ))}
