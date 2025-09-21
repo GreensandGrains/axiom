@@ -2,6 +2,24 @@ import dotenv from 'dotenv';
 // Load environment variables first
 dotenv.config();
 
+import { checkRunningInstance, createPidFile, killExistingServer } from './process-manager';
+
+// Handle development restarts more gracefully
+if (process.env.NODE_ENV === 'development') {
+  // Kill any existing server and create new PID file
+  killExistingServer();
+  setTimeout(() => {
+    createPidFile();
+  }, 1000);
+} else {
+  // Check if another instance is already running in production
+  if (checkRunningInstance()) {
+    console.log('Server is already running. Exiting...');
+    process.exit(0);
+  }
+  createPidFile();
+}
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -173,11 +191,40 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  
+  // Graceful shutdown handling
+  const gracefulShutdown = (signal: string) => {
+    log(`Received ${signal}. Graceful shutdown...`);
+    server.close(() => {
+      log('Server closed.');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
   server.listen({
     port,
     host: "0.0.0.0",
-    reusePort: true,
+    reusePort: false, // Changed to false to prevent multiple instances
   }, () => {
     log(`serving on port ${port}`);
+  }).on('error', (error: any) => {
+    if (error.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is already in use. Attempting to kill existing process...`);
+      killExistingServer();
+      setTimeout(() => {
+        server.listen({
+          port,
+          host: "0.0.0.0",
+          reusePort: false,
+        }, () => {
+          log(`serving on port ${port} after cleanup`);
+        });
+      }, 2000);
+    } else {
+      throw error;
+    }
   });
 })();
