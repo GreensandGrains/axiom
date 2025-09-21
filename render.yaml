@@ -28,10 +28,6 @@ services:
         sync: false # Set this in Render dashboard with your main Discord bot token
       - key: BOT2_TOKEN
         sync: false # Set this in Render dashboard with your quest bot token (if using a second bot)
-      - key: STRIPE_SECRET_KEY
-        sync: false # Set this in Render dashboard with your Stripe secret key
-      - key: STRIPE_PUBLISHABLE_KEY
-        sync: false # Set this in Render dashboard with your Stripe publishable key
       - key: APP_URL
         sync: false # Set this to your Render app URL (e.g., https://your-app-name.onrender.com)
     autoDeploy: true # Enable auto-deploy from your main branch
