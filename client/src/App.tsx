@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/lib/auth";
+import { NavigationProvider } from "@/contexts/navigation-context";
 import Home from "@/pages/home";
 import AddServer from "@/pages/add-server";
 import AddBot from "@/pages/add-bot";
@@ -41,8 +42,9 @@ import Payment from "@/pages/payment";
 import PaymentSuccess from "@/pages/payment-success";
 import YourBots from "@/pages/your-bots";
 import BotDetail from "@/pages/bot-detail";
-
-
+import LoadingPage from "@/components/loading-page";
+import OfflinePage from "@/components/offline-page";
+import { useAppState } from "@/hooks/use-app-state";
 
 function Router() {
   const { user } = useAuth();
@@ -90,12 +92,23 @@ function Router() {
 }
 
 function App() {
+  const { isOnline, isLoading } = useAppState();
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <CookieConsent />
-        <Router />
+        <NavigationProvider>
+          <Toaster />
+          <CookieConsent />
+          {!isOnline ? (
+            <OfflinePage />
+          ) : (
+            <>
+              <Router />
+              {isLoading && <LoadingPage />}
+            </>
+          )}
+        </NavigationProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
