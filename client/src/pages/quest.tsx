@@ -33,7 +33,7 @@ export default function Quest() {
   const queryClient = useQueryClient();
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
   const [socialDialogOpen, setSocialDialogOpen] = useState(false);
-  const inviteLink = "https://discord.gg/Ept7zwYJH5"; // Default invite link
+  const inviteLink = "https://discord.gg/2dEC7dAX"; // Default invite link
   const [timeRemaining, setTimeRemaining] = useState<{ hours: number; minutes: number } | null>(null);
 
   const { data: userQuests, refetch: refetchQuests } = useQuery<QuestProgress>({
