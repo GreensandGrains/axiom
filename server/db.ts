@@ -10,7 +10,7 @@ dotenv.config();
 // Database connection configuration for Render deployment
 // These environment variables must be set in your Render dashboard
 let dbHost = process.env.DB_HOST;
-let dbPort = parseInt(process.env.DB_PORT || '3306');
+let dbPort = process.env.DB_PORT;
 let dbUser = process.env.DB_USER;
 let dbPassword = process.env.DB_PASSWORD;
 let dbName = process.env.DB_NAME;
