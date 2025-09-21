@@ -46,8 +46,41 @@ export default function Login() {
                     e.currentTarget.style.display = 'block';
                   }}
                 />
-              <h2 className="text-white text-size-[20px] font-semibold absolute top-[33px] left-[68px] text-xl">Silly Development</h2>
+              <h2 className="text-white text-size-[20px] font-semibold absolute top-[33px] left-[68px] text-xl" style={{ fontFamily: "'Comic Sans MS', cursive, sans-serif" }}>Axiom</h2>
             </div>
+          </div>
+          {/* Username Input */}
+          <div className="mb-4 absolute top-[140px]">
+            <Label 
+              htmlFor="username" 
+              className="text-sm text-gray-300 absolute left-[7px] top-[-11px]"
+            >
+              Username
+            </Label>
+            <input
+              type="text"
+              id="username"
+              placeholder="Username"
+              className="w-[350px] px-4 py-2 rounded-md bg-[#343541] text-gray-400 border border-gray-700 focus:outline-none focus:border-blue-500 absolute left-[4px] top-[20px] top transition-all duration-300 rounded-xl"
+              data-testid="input-username"
+            />
+          </div>
+
+          {/* Password Input */}
+          <div className="mb-6 absolute top-[240px]">
+            <Label 
+              htmlFor="password" 
+              className="text-sm text-gray-300 absolute left-[5px] top-[-20px]"
+            >
+              Password
+            </Label>
+            <input
+              type="password"
+              id="password"
+              placeholder="Password"
+              className="w-[350px] px-4 py-2 rounded-md bg-[#343541] text-gray-400 border border-gray-700 focus:outline-none focus:border-blue-500 absolute left-[5px] top-[15px] transition-all duration-300 rounded-xl"
+              data-testid="input-password"
+            />
           </div>
 
           {/* Login Title */}
@@ -55,7 +88,7 @@ export default function Login() {
             <h2 className="text-white text-xl font-semibold absolute top-[90px] left-[33px]">Login to Continue</h2>
           </div>
           {/* Remember Me Option */}
-          <div className="flex items-center space-x-2 mb-6 absolute top-[360px]">
+          <div className="flex items-center space-x-2 mb-6 absolute top-[340px]">
             <Checkbox
               id="remember-me"
               checked={rememberMe}
