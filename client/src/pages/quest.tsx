@@ -299,7 +299,7 @@ export default function Quest() {
       reward: 2,
       icon: <Users className="w-8 h-8 text-primary" />,
       action: isQuestCompleted("join-server") ? "Completed" : (serverStatus?.inServer ? "Claim Reward" : "Join Server"),
-      link: `https://discord.gg/${serverStatus?.serverGuildId || 'Ept7zwYJH5'}`,
+      link: `https://discord.gg/${serverStatus?.serverGuildId || '2dEC7dAX'}`,
       note: "Note: Leave and join again reduces reward by 1.5 coins",
       completed: isQuestCompleted("join-server")
     },
@@ -573,7 +573,7 @@ export default function Quest() {
                           if (serverStatus?.isBoosting) {
                             boostServerMutation.mutate();
                           } else {
-                            window.open(`https://discord.gg/${serverStatus?.serverGuildId || 'Ept7zwYJH5'}`, '_blank', 'noopener,noreferrer');
+                            window.open(`https://discord.gg/${serverStatus?.serverGuildId || '2dEC7dAX'}`, '_blank', 'noopener,noreferrer');
                           }
                         }
                       }}
