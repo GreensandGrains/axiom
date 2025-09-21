@@ -1,0 +1,51 @@
+> rest-express@1.0.0 dev
+Connecting to MySQL database: {er/index.ts
+  host: 'db2.sillydevelopment.co.uk',
+  port: 3306,
+  user: 'u77272_CezJ7ZJDoG',
+  database: 's77272_axiom'
+}
+Ignoring invalid configuration option passed to Connection: acquireTimeout. This is currently a warning, but in future versions of MySQL2, an error will be thrown if you pass an invalid configuration option to a Connection
+Ignoring invalid configuration option passed to Connection: timeout. This is currently a warning, but in future versions of MySQL2, an error will be thrown if you pass an invalid configuration option to a Connection
+Ignoring invalid configuration option passed to Connection: reconnect. This is currently a warning, but in future versions of MySQL2, an error will be thrown if you pass an invalid configuration option to a Connection
+🎯 Quest Bot starting...
+(node:2427) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+11:51:37 AM [express] serving on port 5000
+✅ MySQL database connected successfully
+✅ Quest Bot logged in as Axiom#5984!
+✅ Connected to external MySQL database
+❌ Failed to connect to database: Error: connect ECONNREFUSED 127.0.0.1:3306
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1611:16) {
+  errno: -111,
+  code: 'ECONNREFUSED',
+  syscall: 'connect',
+  address: '127.0.0.1',
+  port: 3306,
+  fatal: true
+}
+Started refreshing quest bot application (/) commands.
+✅ Discord bot logged in as Smart Serve#2275!
+Started refreshing application (/) commands.
+Successfully reloaded quest bot application (/) commands.
+Successfully reloaded application (/) commands.
+Browserslist: browsers data (caniuse-lite) is 11 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+11:51:50 AM [express] GET /api/auth/me 401 in 2ms :: {"message":"Not authenticated"}
+11:51:50 AM [express] GET /api/ads 500 in 222ms :: {"message":"Failed to fetch ads"}
+11:51:51 AM [express] GET /api/servers/popular 200 in 838ms :: []
+Error fetching servers: Error: You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '= false)) and `servers`.`advertising_type` != 'member_exchange' OR `servers`....' at line 1
+    at PromisePool.query (/home/runner/workspace/node_modules/mysql2/lib/promise/pool.js:36:22)
+    at MySql2PreparedQuery.execute (/home/runner/workspace/node_modules/src/mysql2/session.ts:121:31)
+    at MySqlSelectBase.execute (/home/runner/workspace/node_modules/src/mysql-core/query-builders/select.ts:1056:25)
+    at MySqlSelectBase.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5) {
+  code: 'ER_PARSE_ERROR',
+  errno: 1064,
+  sql: "select `id`, `server_id`, `name`, `description`, `short_description`, `icon_url`, `banner_url`, `invite_link`, `tags`, `category`, `member_count`, `online_count`, `verified`, `featured`, `nsfw`, `premium`, `owner_id`, `owner_username`, `total_votes`, `total_reviews`, `average_rating`, `total_comments`, `advertising_user_id`, `advertising_type`, `advertising_expiry`, `bump_enabled`, `created_at`, `updated_at` from `servers` where ((`servers`.`advertising_type` = 'none' or `servers`.`advertising_type` = 'normal' or (`servers`.`advertising_type` IS NULL and  = false)) and `servers`.`advertising_type` != 'member_exchange' OR `servers`.`advertising_type` IS NULL) order by `servers`.`member_count` desc limit 20",
+  sqlState: '42000',
+  sqlMessage: "You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near '= false)) and `servers`.`advertising_type` != 'member_exchange' OR `servers`....' at line 1"
+}
+11:51:51 AM [express] GET /api/servers 500 in 840ms :: {"message":"Failed to fetch servers"}
+11:52:36 AM [express] GET /api/auth/me 401 in 2ms :: {"message":"Not authenticated"}
