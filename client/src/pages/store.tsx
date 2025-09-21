@@ -7,6 +7,8 @@ import { Coins, Zap, Crown, ShoppingCart, ArrowRight } from "lucide-react";
 import Navbar from "@/components/navbar";
 import { Link } from "wouter";
 import backgroundImage from "@assets/generated_images/mengo-fedorov-forest-snow-parallax.gif";
+import dotenv from "dotenv";
+dotenv.config();
 
 const stripePublicKey = process.env.VITE_STRIPE_PUBLIC_KEY;
 
