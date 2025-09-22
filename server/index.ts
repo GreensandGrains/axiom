@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 // Load environment variables first
 dotenv.config();
 
-import { checkRunningInstance, createPidFile, killExistingServer } from '@server/process-manager';
+import { checkRunningInstance, createPidFile, killExistingServer } from './server/process-manager';
 
 // Handle development restarts more gracefully
 if (process.env.NODE_ENV === 'development') {
