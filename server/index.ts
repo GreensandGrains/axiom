@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 // Load environment variables first
 dotenv.config();
 
-import { checkRunningInstance, createPidFile, killExistingServer } from './server/process-manager';
+import { checkRunningInstance, createPidFile, killExistingServer } from './process-manager';
 
 // Handle development restarts more gracefully
 if (process.env.NODE_ENV === 'development') {
@@ -21,17 +21,17 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "@server/routes";
-import { setupVite, serveStatic, log } from "@server/vite";
+import { registerRoutes } from "./routes";
+import { setupVite, serveStatic, log } from "./vite";
 import cookieSession from "cookie-session";
-import { storage } from "@server/storage";
-import { startDiscordBot } from "@server/discord-bot";
+import { storage } from "./storage";
+import { startDiscordBot } from "./discord-bot";
 import { 
   securityHeaders, 
   sanitizeInput, 
   apiLimiter,
   errorHandler 
-} from "@server/middleware/security";
+} from "./middleware/security";
 
 // SSL certificates are handled properly by the system
 
