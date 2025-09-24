@@ -11,14 +11,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { User, Server, Trophy, ShoppingCart, LogOut, Bot, Calendar, Plus, Users, Hash, Settings, Coins, ChevronDown, HelpCircle, Mail, Ticket, Twitter, Instagram, Youtube, Facebook, Search } from "lucide-react";
+import { User, Server, Trophy, ShoppingCart, LogOut, Bot, Calendar, Plus, Users, Hash, Settings, Coins, ChevronDown, HelpCircle, Mail, Ticket, Twitter, Instagram, Youtube, Facebook, Search, Menu, X } from "lucide-react";
 
 export default function Navbar() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [location, navigate] = useLocation();
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [supportDropdownOpen, setSupportDropdownOpen] = useState(false);
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const handleLogin = () => {
     loginWithDiscord(false);
   };
@@ -80,8 +80,7 @@ export default function Navbar() {
           </div>
 
           {/* Navigation Links next to logo */}
-          <div className="flex absolute left-[250px] ml-12">
-            <div className="text-sm flex  space-x-8">
+          <div className="hidden lg:flex items-center ml-10 space-x-8">
               <Link
                 href="/explore"
                 className={`flex items-center text-gray-400 hover:text-purple-400 transition-all duration-300 hover:scale-105 ${
@@ -282,10 +281,14 @@ export default function Navbar() {
                 )}
               </div>
             </div>
-          </div>
 
           {/* Login/Profile Section */}
-          <div className="flex items-center gap-4">
+          <div className="lg:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="text-white hover:text-purple-400"
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
