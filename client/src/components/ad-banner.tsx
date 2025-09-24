@@ -9,7 +9,6 @@ interface Ad {
   title: string;
   content: string;
   imageUrl?: string;
-  linkUrl?: string;
   position: string;
 }
 
