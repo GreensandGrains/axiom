@@ -107,7 +107,6 @@ export const ads = mysqlTable("ads", {
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   content: text("content").notNull(),
-  imageUrl: varchar("image_url", { length: 500 }),
   linkUrl: varchar("link_url", { length: 500 }),
   position: varchar("position", { length: 50 }).notNull().default("sidebar"),
   isActive: boolean("is_active").notNull().default(true),
