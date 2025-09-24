@@ -106,13 +106,11 @@ export const ads = mysqlTable("ads", {
   id: varchar("id", { length: 191 }).primaryKey().$defaultFn(() => createId()),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
-  content: text("content").notNull(),
-  linkUrl: varchar("link_url", { length: 500 }),
+  imageUrl: varchar("image_url", { length: 500 }),
   position: varchar("position", { length: 50 }).notNull().default("sidebar"),
   impressions: int("impressions").notNull().default(0),
   clicks: int("clicks").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
 });
 
 export const slideshows = mysqlTable("slideshows", {
