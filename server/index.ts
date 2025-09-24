@@ -185,6 +185,23 @@ app.use((req, res, next) => {
   } else {
     serveStatic(app);
   }
+  // SPA fallback - serve index.html for all non-API routes
+  // This must come AFTER all API routes and static file serving
+  app.get('*', (req, res, next) => {
+    // Don't interfere with API routes
+    if (req.path.startsWith('/api/')) {
+      return next();
+    }
+    
+    // For production, serve the built index.html
+    if (app.get("env") !== "development") {
+      res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'));
+    } else {
+      // In development, Vite handles this
+      next();
+    }
+  });
+
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
