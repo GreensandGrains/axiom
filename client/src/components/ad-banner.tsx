@@ -60,17 +60,6 @@ export function AdBanner({ position, className = "" }: AdBannerProps) {
         )}
         <h3 className="font-semibold text-sm mb-2">{ad.title}</h3>
         <p className="text-sm text-gray-600 mb-3">{ad.content}</p>
-        {ad.linkUrl && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="w-full"
-            onClick={() => window.open(ad.linkUrl, '_blank')}
-          >
-            Learn More
-            <ExternalLink className="w-3 h-3 ml-1" />
-          </Button>
-        )}
       </CardContent>
     </Card>
   );
