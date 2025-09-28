@@ -91,7 +91,7 @@ export default function YourServers() {
           botPresent: false,
           checkMethod: "http_error",
           errorDetails: errorData.message,
-          inviteUrl: `https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&scope=bot%20applications.commands&guild_id=${guildId}`
+          inviteUrl: `https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&integration_type=0&scope=bot+applications.commands`
         };
       }
       
@@ -110,7 +110,7 @@ export default function YourServers() {
       // Fallback: show modal to invite bot
       console.log(`❌ Fallback: showing invite modal for ${server.name}`);
       setSelectedServer(server);
-      setBotInviteUrl(`https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&integration_type=0&scope=bot+applications.commands`;
+      setBotInviteUrl(`https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&integration_type=0&scope=bot+applications.commands`);
       setShowBotModal(true);
     }
   };
