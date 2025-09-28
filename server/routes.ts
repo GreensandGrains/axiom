@@ -283,7 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('User logged in with persistent session (1 year)');
 
       // Redirect to home - cookie-session automatically saves
-      res.redirect('/home');
+      res.redirect('/');
 
 
     } catch (error) {
