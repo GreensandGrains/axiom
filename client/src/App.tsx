@@ -71,7 +71,7 @@ function Router() {
       <Route path="/jobs" component={Jobs} />
       <Route path="/profile" component={Profile} />
       <Route path="/admin" component={AdminPage} />
-      <Route path"/google9fd896c9fede5b13.html" component={google9fd896c9fede5b13.html} />
+      <Route path"/google" component={google9fd896c9fede5b13} />
       <Route path="/search" component={SearchPage} />
       <Route path="/server/:id" component={ServerDetail} />
       <Route path="/help" component={Help} />
