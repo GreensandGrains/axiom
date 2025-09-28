@@ -87,6 +87,7 @@ export default function Home() {
 
         {/* Top Active Discord Servers Section */}
         <section>
+          <meta name="google-site-verification" content="7t-j2Dycnh5HtxjejGPIe9eq1spne-N8bQrSBtenid0" />
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
