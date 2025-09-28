@@ -42,7 +42,7 @@ import Payment from "@/pages/payment";
 import PaymentSuccess from "@/pages/payment-success";
 import YourBots from "@/pages/your-bots";
 import BotDetail from "@/pages/bot-detail";
-import google9fd896c9fede5b13.html from "@/pages/google9fd896c9fede5b13";
+import google9fd896c9fede5b13 from "@/pages/google9fd896c9fede5b13";
 import LoadingPage from "@/components/loading-page";
 import OfflinePage from "@/components/offline-page";
 import { useAppState } from "@/hooks/use-app-state";
