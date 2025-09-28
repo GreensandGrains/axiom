@@ -110,7 +110,7 @@ export default function YourServers() {
       // Fallback: show modal to invite bot
       console.log(`❌ Fallback: showing invite modal for ${server.name}`);
       setSelectedServer(server);
-      setBotInviteUrl(`https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&scope=bot%20applications.commands&guild_id=${server.discordId || server.id}`);
+      setBotInviteUrl(`https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&integration_type=0&scope=bot+applications.commands`;
       setShowBotModal(true);
     }
   };
@@ -407,10 +407,10 @@ export default function YourServers() {
             
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-foreground">
-                Smart Serve Bot Required
+                Axiom Bot Required
               </h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Our Smart Serve bot is not present in <span className="font-semibold text-purple-400">{selectedServer?.name}</span>. 
+                Our Axiom bot is not present in <span className="font-semibold text-purple-400">{selectedServer?.name}</span>. 
                 You must invite the bot first before you can advertise this server.
               </p>
               <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mt-4">
@@ -422,7 +422,7 @@ export default function YourServers() {
 
             <div className="space-y-3">
               <Button
-                onClick={() => window.open(botInviteUrl, '_blank')}
+                onClick={() => window.open('https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&integration_type=0&scope=bot+applications.commands')}
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3"
                 data-testid="button-invite-bot-to-server"
               >
