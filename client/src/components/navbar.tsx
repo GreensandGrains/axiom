@@ -11,13 +11,14 @@ import {
   DropdownMenuTrigger,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { User, Server, Trophy, ShoppingCart, LogOut, Bot, Calendar, Plus, Users, Hash, Settings, Coins, ChevronDown, HelpCircle, Mail, Ticket, Twitter, Instagram, Youtube, Facebook, Search } from "lucide-react";
+import { User, Server, Trophy, ShoppingCart, LogOut, Bot, Calendar, Plus, Users, Hash, Settings, Coins, ChevronDown, HelpCircle, Mail, Ticket, Twitter, Instagram, Youtube, Facebook, Search, X, Menu } from "lucide-react";
 
 export default function Navbar() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [location, navigate] = useLocation();
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
   const [supportDropdownOpen, setSupportDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogin = () => {
     loginWithDiscord(false);
