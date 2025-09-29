@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <title>Axiom - Discord Server Directory</title>
+    <meta name="google-site-verification" content="google9fd896c9fede5b13" />
+    <meta name="description" content="Discover amazing Discord servers, bots, and communities. Join thousands of active servers and grow your community with Axiom." />
+    <meta name="keywords" content="discord, servers, bots, community, gaming, directory, discord server list, gaming communities" />
+    <meta name="author" content="Axiom Discord Directory" />
+    <meta name="robots" content="index, follow" />
+    <meta name="googlebot" content="index, follow" />
+    <meta property="og:title" content="Axiom - Discord Server Directory" />
+    <meta property="og:description" content="Discover amazing Discord servers, bots, and communities" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://axiom-discord.replit.app" />
+    <meta property="og:image" content="/assets/axiom-logo.png" />
+    <meta property="og:site_name" content="Axiom Discord Directory" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Axiom - Discord Server Directory" />
+    <meta name="twitter:description" content="Discover amazing Discord servers, bots, and communities" />
+    <meta name="twitter:image" content="/assets/axiom-logo.png" />
+    <meta name="twitter:site" content="@axiom_discord" />
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/axiom-logo.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/axiom-logo.png" />
+    <link rel="apple-touch-icon" href="/assets/axiom-logo.png" />
+    <link rel="shortcut icon" href="/assets/axiom-logo.png" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#7C3AED">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Axiom">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Axiom Discord Directory",
+      "description": "Discover amazing Discord servers, bots, and communities",
+      "url": "https://axiom-discord.replit.app",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://axiom-discord.replit.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/assets/axiom-logo.png" as="image">
+    
+    <!-- DNS prefetch for external resources -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+    <link rel="dns-prefetch" href="https://cdnjs.cloudflare.com">
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer">
+    
+    <!-- Google Analytics (optional - add your GA4 tracking ID) -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_TRACKING_ID"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'GA_TRACKING_ID');
+    </script>
+    -->
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, function(err) {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
+    
+    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
+  </body>
+</html>
