@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { apiRequest } from "@/lib/queryClient";
 import { insertSlideshowSchema, type Slideshow, insertFaqSchema, type Faq } from "@shared/schema";
 import backgroundImage from "@assets/generated_images/mengo-fedorov-forest-snow-parallax.gif";
+import { GoogleAdPreview } from "@/components/google-ad-preview";
+
 
 // Interface definitions
 interface Ad {
@@ -444,32 +445,6 @@ export default function AdminPage() {
     tags: [] as string[],
     order: 0,
   });
-
-  // Google Ad Preview Component
-  const GoogleAdPreview = ({ ad }: { ad: any }) => (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 max-w-md">
-      <div className="flex items-start space-x-3">
-        {ad.imageUrl && (
-          <img src={ad.imageUrl} alt="Ad" className="w-16 h-16 object-cover rounded" />
-        )}
-        <div className="flex-1">
-          <div className="flex items-center space-x-1 mb-1">
-            <span className="text-xs text-gray-500">Ad</span>
-            <Globe className="w-3 h-3 text-gray-500" />
-          </div>
-          <h3 className="text-blue-600 text-sm font-medium hover:underline cursor-pointer">
-            {ad.title || "Advertisement Title"}
-          </h3>
-          <p className="text-gray-800 text-sm mt-1">
-            {ad.description || "Advertisement description goes here..."}
-          </p>
-          <div className="text-green-700 text-xs mt-1">
-            {ad.targetUrl || "example.com"}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   // Live Chat Component
   const LiveChatPanel = () => (
@@ -1007,7 +982,22 @@ export default function AdminPage() {
                             </Select>
                           </div>
 
-                          <Button className="w-full bg-primary hover:bg-primary/90">
+                          <Button className="w-full bg-primary hover:bg-primary/90" onClick={async () => {
+                            await apiRequest("/api/ads", "POST", formData);
+                            refetchAds();
+                            setShowForm(false);
+                            setFormData({
+                              title: "",
+                              description: "",
+                              imageUrl: "",
+                              targetUrl: "",
+                              position: "header",
+                            });
+                            toast({
+                              title: "Success!",
+                              description: "Advertisement created successfully.",
+                            });
+                          }}>
                             Create Advertisement
                           </Button>
                         </div>
@@ -1042,13 +1032,37 @@ export default function AdminPage() {
                           <p>Clicks: {(ad.clicks || 0).toLocaleString()}</p>
                         </div>
                         <div className="flex space-x-1">
-                          <Button size="sm" variant="outline" className="border-border text-muted-foreground">
+                          <Button size="sm" variant="outline" className="border-border text-muted-foreground" onClick={() => {
+                            setEditingAd(ad);
+                            setFormData({
+                              title: ad.title,
+                              description: ad.description,
+                              imageUrl: ad.imageUrl || "",
+                              targetUrl: ad.targetUrl,
+                              position: ad.position || "header",
+                            });
+                            setShowForm(true);
+                          }}>
                             <Edit className="w-3 h-3" />
                           </Button>
-                          <Button size="sm" variant="outline" className="border-border text-muted-foreground">
+                          <Button size="sm" variant="outline" className="border-border text-muted-foreground" onClick={async () => {
+                            await apiRequest(`/api/ads/${ad.id}`, "PATCH", { isActive: !ad.isActive });
+                            refetchAds();
+                            toast({
+                              title: "Success!",
+                              description: `Advertisement ${ad.isActive ? 'paused' : 'resumed'} successfully.`,
+                            });
+                          }}>
                             {ad.isActive ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
                           </Button>
-                          <Button size="sm" variant="outline" className="border-destructive text-destructive">
+                          <Button size="sm" variant="outline" className="border-destructive text-destructive" onClick={async () => {
+                            await apiRequest(`/api/ads/${ad.id}`, "DELETE");
+                            refetchAds();
+                            toast({
+                              title: "Success!",
+                              description: "Advertisement deleted successfully.",
+                            });
+                          }}>
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
@@ -1482,7 +1496,7 @@ export default function AdminPage() {
                               <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
                             </div>
                           </div>
-                          <div className="flex space-x-2 ml-4">
+                          <div className="flex space-x-2">
                             <Button
                               size="sm"
                               variant="outline"
@@ -1600,6 +1614,36 @@ export default function AdminPage() {
               <CardContent>
                 <div className="space-y-4">
                   <p className="text-muted-foreground">Bot control interface will be available here.</p>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button>Configure Bot Invite URL</Button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-background border-border">
+                      <DialogHeader>
+                        <DialogTitle className="text-foreground">Bot Invite Configuration</DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
+                          Set the Discord bot invite URL.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="invite-url" className="text-muted-foreground">Invite URL</Label>
+                          <Input
+                            id="invite-url"
+                            value={process.env.DISCORD_BOT_CLIENT_ID ? `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_BOT_CLIENT_ID}&scope=bot&permissions=8` : ""}
+                            readOnly
+                            className="bg-background border-border text-foreground"
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            You can change the bot client ID by updating the `DISCORD_BOT_CLIENT_ID` environment variable in your secrets.
+                          </p>
+                        </div>
+                        <Button onClick={() => navigator.clipboard.writeText(process.env.DISCORD_BOT_CLIENT_ID ? `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_BOT_CLIENT_ID}&scope=bot&permissions=8` : "")} className="w-full">
+                          Copy Invite URL
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardContent>
             </Card>
