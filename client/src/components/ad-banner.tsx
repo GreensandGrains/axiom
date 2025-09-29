@@ -10,6 +10,7 @@ interface Ad {
   content: string;
   imageUrl?: string;
   position: string;
+  targetUrl?: string;
 }
 
 interface AdBannerProps {
@@ -45,11 +46,21 @@ export function AdBanner({ position, className = "" }: AdBannerProps) {
 
   const ad = ads[0]; // Show first ad for the position
 
+  const handleAdClick = () => {
+    if (ad.targetUrl) {
+      window.open(ad.targetUrl, '_blank');
+    }
+  };
+
   return (
-    <Card className={`border-dashed border-orange-300 bg-orange-50/50 ${className}`}>
+    <Card 
+      className={`border-dashed border-orange-300 bg-orange-50/50 cursor-pointer hover:shadow-md transition-shadow ${className}`}
+      onClick={handleAdClick}
+    >
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-orange-600 font-medium">Advertisement</span>
+          <ExternalLink className="w-3 h-3 text-orange-600" />
         </div>
         {ad.imageUrl && (
           <img 
