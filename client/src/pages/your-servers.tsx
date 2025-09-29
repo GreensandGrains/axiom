@@ -109,7 +109,7 @@ export default function YourServers() {
       }
 
       setSelectedServer(server);
-      setBotInviteUrl(data.inviteUrl);
+      setBotInviteUrl(`https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_BOT_CLIENT_ID || '1418600262938923220'}&permissions=8&integration_type=0&scope=bot+applications.commands`);
       setShowBotModal(true);
 
     } catch (error) {
