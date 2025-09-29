@@ -429,7 +429,7 @@ export default function YourServers() {
 
             <div className="space-y-3">
               <Button
-                onClick={() => window.open(botInviteUrl, '_blank')}
+                onClick={() => window.open('https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&integration_type=0&scope=bot+applications.commands')}
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3"
                 data-testid="button-invite-bot-to-server"
               >
