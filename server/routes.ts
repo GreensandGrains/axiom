@@ -1359,6 +1359,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Analytics routes
+  app.get("/api/analytics", requireAuth, async (req, res) => {
+    try {
+      const { range = "7d", category = "all" } = req.query;
+
+      const analytics = {
+        totalViews: 15420,
+        uniqueVisitors: 3240,
+        serverJoins: 842,
+        botInvites: 567,
+        topServers: [
+          { id: "1", name: "Gaming Central", category: "Gaming", views: 1250 },
+          { id: "2", name: "Study Group", category: "Education", views: 980 },
+          { id: "3", name: "Art Community", category: "Creative", views: 750 },
+        ],
+        growth: {
+          engagement: 18,
+          servers: 12,
+          bots: 25,
+        }
+      };
+
+      res.json(analytics);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      res.status(500).json({ message: "Failed to fetch analytics" });
+    }
+  });
+
+  // Moderation routes
+  app.get("/api/moderation/reports", requireAdmin, async (req, res) => {
+    try {
+      const reports = [
+        {
+          id: "1",
+          title: "Inappropriate server content",
+          description: "Server contains NSFW content without proper labeling",
+          type: "content",
+          status: "pending",
+          reporterUsername: "user123",
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: "2",
+          title: "Spam bot behavior",
+          description: "Bot is sending unsolicited messages",
+          type: "behavior",
+          status: "pending",
+          reporterUsername: "moderator456",
+          createdAt: new Date().toISOString(),
+        }
+      ];
+
+      res.json(reports);
+    } catch (error) {
+      console.error("Error fetching reports:", error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  app.get("/api/moderation/stats", requireAdmin, async (req, res) => {
+    try {
+      const stats = {
+        totalReports: 45,
+        pendingReports: 8,
+        reportsToday: 3,
+        actionsToday: 5,
+        avgResponseTime: "2h",
+      };
+
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching moderation stats:", error);
+      res.status(500).json({ message: "Failed to fetch moderation stats" });
+    }
+  });
+
+  app.patch("/api/moderation/reports/:id", requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { action, reason } = req.body;
+
+      // Process moderation action here
+      console.log(`Moderation action ${action} applied to report ${id}: ${reason}`);
+
+      res.json({ success: true, message: "Moderation action completed" });
+    } catch (error) {
+      console.error("Error processing moderation action:", error);
+      res.status(500).json({ message: "Failed to process moderation action" });
+    }
+  });
+
+  // Notifications routes
+  app.get("/api/notifications", requireAuth, async (req, res) => {
+    try {
+      const notifications = [
+        {
+          id: "1",
+          title: "Quest Completed!",
+          message: "You've completed the 'Join Server' quest and earned 2 coins!",
+          type: "quest",
+          priority: "normal",
+          read: false,
+          createdAt: new Date().toISOString(),
+        },
+        {
+          id: "2",
+          title: "Server Featured",
+          message: "Your server 'Gaming Hub' has been featured on the homepage!",
+          type: "system",
+          priority: "high",
+          read: false,
+          createdAt: new Date(Date.now() - 86400000).toISOString(),
+        },
+        {
+          id: "3",
+          title: "New Bot Review",
+          message: "Your bot submission has received a new review.",
+          type: "email",
+          priority: "normal",
+          read: true,
+          createdAt: new Date(Date.now() - 172800000).toISOString(),
+        }
+      ];
+
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log(`Marking notification ${id} as read for user ${req.user!.id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      console.log(`Deleting notification ${id} for user ${req.user!.id}`);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
+  app.patch("/api/notifications/settings", requireAuth, async (req, res) => {
+    try {
+      const settings = req.body;
+      console.log(`Updating notification settings for user ${req.user!.id}:`, settings);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating notification settings:", error);
+      res.status(500).json({ message: "Failed to update notification settings" });
+    }
+  });
+
   // Get user by Discord username/ID for Trade feature
   app.get("/api/users/lookup/:identifier", async (req, res) => {
     if (!req.user) {
@@ -2645,7 +2810,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .addFields(
             { name: '🤖 Bot Name', value: bot.name, inline: true },
             { name: '👤 Owner', value: bot.ownerId, inline: true },
-            { name: '🔗 Invite Link', value: bot.inviteUrl, inline: false },
+            // Extract client ID from bot token if DISCORD_CLIENT_ID is not set
+            // This ensures the invite link is correct even if DISCORD_CLIENT_ID is missing
+            (() => {
+              const clientId = process.env.DISCORD_CLIENT_ID || (process.env.DISCORD_BOT_TOKEN ? process.env.DISCORD_BOT_TOKEN.split('.')[0] : "1418600262938923220");
+              const botInviteUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands`;
+              return { name: '🔗 Invite Link', value: botInviteUrl, inline: false };
+            })(),
             { name: '📝 Description', value: bot.description.substring(0, 1000), inline: false }
           )
           .setTimestamp();

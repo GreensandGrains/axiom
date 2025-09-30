@@ -53,8 +53,9 @@ declare global {
 }
 
 // Set default Discord Client ID if not provided
-if (!process.env.DISCORD_CLIENT_ID) {
-  process.env.DISCORD_CLIENT_ID = "1418600262938923220";
+// Extract Discord Client ID from bot token if not explicitly set
+if (!process.env.DISCORD_CLIENT_ID && process.env.DISCORD_BOT_TOKEN) {
+  process.env.DISCORD_CLIENT_ID = process.env.DISCORD_BOT_TOKEN.split('.')[0];
 }
 
 const app = express();
@@ -156,7 +157,7 @@ app.use((req, res, next) => {
 
   // Start Discord bot for economy rewards
   startDiscordBot();
-  
+
   // Start Quest Bot for notifications and channel management
   try {
     import('./quest-bot');
@@ -193,7 +194,7 @@ app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) {
       return next();
     }
-    
+
     // For production, serve the built index.html
     if (app.get("env") !== "development") {
       res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'));
@@ -209,7 +210,7 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  
+
   // Graceful shutdown handling
   const gracefulShutdown = (signal: string) => {
     log(`Received ${signal}. Graceful shutdown...`);
