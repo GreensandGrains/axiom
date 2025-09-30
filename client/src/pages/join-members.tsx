@@ -570,9 +570,9 @@ export default function JoinMembers() {
                 Cancel
               </Button>
               <Button asChild className="flex-1 bg-purple-600 hover:bg-purple-700 text-white">
-                <a href={botCheckData?.inviteUrl || "#"} target="_blank" rel="noopener noreferrer">
+                <a href={botCheckData?.inviteUrl || `https://discord.com/oauth2/authorize?client_id=${import.meta.env.VITE_DISCORD_CLIENT_ID || "1418600262938923220"}&permissions=8&scope=bot%20applications.commands`} target="_blank" rel="noopener noreferrer">
                   <Zap className="w-4 h-4 mr-2" />
-                  Invite Bot
+                  Invite Smart Serve Bot
                 </a>
               </Button>
             </div>

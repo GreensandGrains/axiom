@@ -11,6 +11,7 @@ import { Trash2, Plus, Edit, Timer, Upload, Image, Play, Pause, Eye, EyeOff, Zap
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -415,6 +416,8 @@ export default function AdminPage() {
   // State for forms
   const [showForm, setShowForm] = useState(false);
   const [editingAd, setEditingAd] = useState<Ad | null>(null);
+  const [showSlideshowPreview, setShowSlideshowPreview] = useState(false);
+  const [previewSlideshow, setPreviewSlideshow] = useState<Slideshow | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -445,6 +448,56 @@ export default function AdminPage() {
     tags: [] as string[],
     order: 0,
   });
+
+  // Bot invite URL generator
+  const getBotInviteUrl = () => {
+    // Use the correct environment variable name for client-side
+    const botClientId = import.meta.env.VITE_DISCORD_CLIENT_ID || "1418600262938923220";
+    return `https://discord.com/oauth2/authorize?client_id=${botClientId}&permissions=8&scope=bot%20applications.commands`;
+  };
+
+  // Slideshow Preview Modal Component
+  const SlideshowPreviewModal = () => (
+    <Dialog open={showSlideshowPreview} onOpenChange={setShowSlideshowPreview}>
+      <DialogContent className="max-w-4xl bg-background border-border">
+        <DialogHeader>
+          <DialogTitle className="text-foreground">Slideshow Preview</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Preview how this slideshow will appear on the website
+          </DialogDescription>
+        </DialogHeader>
+        {previewSlideshow && (
+          <div className="space-y-4">
+            <div className="relative aspect-video rounded-lg overflow-hidden border border-border">
+              <img
+                src={previewSlideshow.imageUrl}
+                alt={previewSlideshow.title}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                <h3 className="text-white text-xl font-bold">{previewSlideshow.title}</h3>
+                {previewSlideshow.linkUrl && (
+                  <p className="text-gray-300 text-sm">Links to: {previewSlideshow.linkUrl}</p>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <strong className="text-foreground">Display Order:</strong>
+                <span className="text-muted-foreground ml-2">{previewSlideshow.order}</span>
+              </div>
+              <div>
+                <strong className="text-foreground">Status:</strong>
+                <Badge variant={previewSlideshow.active ? "default" : "destructive"} className="ml-2">
+                  {previewSlideshow.active ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
 
   // Live Chat Component
   const LiveChatPanel = () => (
@@ -783,6 +836,7 @@ export default function AdminPage() {
       </section>
 
       <div className="container mx-auto px-4 py-8">
+        <SlideshowPreviewModal />
         <Tabs defaultValue="overview" className="w-full">
           <TabsList className="grid w-full grid-cols-9 bg-card/50 border border-border">
             <TabsTrigger value="overview" className="data-[state=active]:bg-primary">Overview</TabsTrigger>
@@ -1273,6 +1327,18 @@ export default function AdminPage() {
                             <Button
                               size="sm"
                               variant="outline"
+                              onClick={() => {
+                                setPreviewSlideshow(slideshow);
+                                setShowSlideshowPreview(true);
+                              }}
+                              className="border-border text-muted-foreground"
+                              data-testid={`button-preview-slideshow-${slideshow.id}`}
+                            >
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => deleteSlideshowMutation.mutate(slideshow.id)}
                               className="border-destructive text-destructive"
                               data-testid={`button-delete-slideshow-${slideshow.id}`}
@@ -1612,35 +1678,96 @@ export default function AdminPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <p className="text-muted-foreground">Bot control interface will be available here.</p>
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-foreground">Bot Information</h3>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Bot Status:</span>
+                          <Badge className="bg-green-600">Online</Badge>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Client ID:</span>
+                          <span className="text-foreground">{import.meta.env.VITE_DISCORD_CLIENT_ID || "1418600262938923220"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Servers Connected:</span>
+                          <span className="text-foreground">{liveStats?.botServers || 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold text-foreground">Quick Actions</h3>
+                      <div className="space-y-2">
+                        <Button 
+                          onClick={() => window.open(getBotInviteUrl(), '_blank')}
+                          className="w-full bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Bot className="w-4 h-4 mr-2" />
+                          Invite Bot to Server
+                        </Button>
+                        <Button 
+                          onClick={() => navigator.clipboard.writeText(getBotInviteUrl())}
+                          variant="outline" 
+                          className="w-full border-border text-muted-foreground"
+                        >
+                          Copy Invite Link
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <Dialog>
                     <DialogTrigger asChild>
-                      <Button>Configure Bot Invite URL</Button>
+                      <Button variant="outline">Advanced Bot Configuration</Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-background border-border">
+                    <DialogContent className="bg-background border-border max-w-2xl">
                       <DialogHeader>
-                        <DialogTitle className="text-foreground">Bot Invite Configuration</DialogTitle>
+                        <DialogTitle className="text-foreground">Advanced Bot Configuration</DialogTitle>
                         <DialogDescription className="text-muted-foreground">
-                          Set the Discord bot invite URL.
+                          Configure advanced bot settings and permissions
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4">
                         <div>
-                          <Label htmlFor="invite-url" className="text-muted-foreground">Invite URL</Label>
+                          <Label htmlFor="invite-url" className="text-muted-foreground">Current Invite URL</Label>
                           <Input
                             id="invite-url"
-                            value={process.env.DISCORD_BOT_CLIENT_ID ? `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_BOT_CLIENT_ID}&scope=bot&permissions=8` : ""}
+                            value={getBotInviteUrl()}
                             readOnly
                             className="bg-background border-border text-foreground"
                           />
                           <p className="text-xs text-muted-foreground mt-1">
-                            You can change the bot client ID by updating the `DISCORD_BOT_CLIENT_ID` environment variable in your secrets.
+                            This URL includes administrator permissions for full bot functionality.
                           </p>
                         </div>
-                        <Button onClick={() => navigator.clipboard.writeText(process.env.DISCORD_BOT_CLIENT_ID ? `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_BOT_CLIENT_ID}&scope=bot&permissions=8` : "")} className="w-full">
-                          Copy Invite URL
-                        </Button>
+                        
+                        <div className="space-y-2">
+                          <Label className="text-muted-foreground">Bot Permissions Included:</Label>
+                          <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
+                            <div>• Manage Server</div>
+                            <div>• Manage Channels</div>
+                            <div>• Manage Roles</div>
+                            <div>• Send Messages</div>
+                            <div>• Manage Messages</div>
+                            <div>• Use Slash Commands</div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          <Button onClick={() => navigator.clipboard.writeText(getBotInviteUrl())} className="flex-1">
+                            Copy Full Invite URL
+                          </Button>
+                          <Button 
+                            onClick={() => window.open(`https://discord.com/developers/applications/${import.meta.env.VITE_DISCORD_CLIENT_ID || "1418600262938923220"}`, '_blank')}
+                            variant="outline"
+                            className="flex-1"
+                          >
+                            Open Developer Portal
+                          </Button>
+                        </div>
                       </div>
                     </DialogContent>
                   </Dialog>
