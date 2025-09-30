@@ -190,14 +190,21 @@ app.use((req, res, next) => {
   // SPA fallback - serve index.html for all non-API routes
   // This must come AFTER all API routes and static file serving
   app.get('*', (req, res, next) => {
-    // Don't interfere with API routes
-    if (req.path.startsWith('/api/')) {
+    // Don't interfere with API routes or static assets
+    if (req.path.startsWith('/api/') || 
+        req.path.startsWith('/assets/') || 
+        req.path.includes('.')) {
       return next();
     }
 
-    // For production, serve the built index.html
+    // For production, serve the built index.html for all SPA routes
     if (app.get("env") !== "development") {
-      res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'));
+      res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'), (err) => {
+        if (err) {
+          console.error('Error serving index.html:', err);
+          res.status(500).send('Internal Server Error');
+        }
+      });
     } else {
       // In development, Vite handles this
       next();

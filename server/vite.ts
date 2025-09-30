@@ -77,15 +77,29 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Serve static files from the public directory
+  // Serve static files from the public directory with proper caching
   app.use(express.static(publicPath, {
-    // Don't fall back to index.html here - we'll handle that separately
     fallthrough: true,
-    index: false
+    index: false,
+    maxAge: '1d', // Cache static assets for 1 day
+    etag: true,
+    lastModified: true
   }));
 
-  // Fall through to index.html for SPA routing
-  app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(publicPath, "index.html"));
+  // Handle SPA routing - serve index.html for all non-static routes
+  app.use("*", (req, res) => {
+    // Don't serve index.html for API routes or actual static files
+    if (req.originalUrl.startsWith('/api/') || 
+        req.originalUrl.startsWith('/assets/') ||
+        req.originalUrl.includes('.')) {
+      return res.status(404).send('Not Found');
+    }
+    
+    res.sendFile(path.resolve(publicPath, "index.html"), (err) => {
+      if (err) {
+        console.error('Error serving index.html:', err);
+        res.status(500).send('Internal Server Error');
+      }
+    });
   });
 }
