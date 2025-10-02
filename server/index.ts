@@ -190,15 +190,20 @@ app.use((req, res, next) => {
   // SPA fallback - serve index.html for all non-API routes
   // This must come AFTER all API routes and static file serving
   app.get('*', (req, res, next) => {
-    // Don't interfere with API routes or static assets
+    // Don't interfere with API routes, static assets, or special files
     if (req.path.startsWith('/api/') || 
-        req.path.startsWith('/assets/') || 
-        req.path.includes('.')) {
+        req.path.startsWith('/assets/') ||
+        req.path.startsWith('/sitemap') ||
+        req.path.startsWith('/robots.txt') ||
+        req.path.startsWith('/sw.js') ||
+        req.path.startsWith('/manifest.json') ||
+        req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp)$/)) {
       return next();
     }
 
     // For production, serve the built index.html for all SPA routes
     if (app.get("env") !== "development") {
+      res.setHeader('Content-Type', 'text/html');
       res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'), (err) => {
         if (err) {
           console.error('Error serving index.html:', err);

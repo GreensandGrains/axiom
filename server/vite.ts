@@ -88,13 +88,18 @@ export function serveStatic(app: Express) {
 
   // Handle SPA routing - serve index.html for all non-static routes
   app.use("*", (req, res) => {
-    // Don't serve index.html for API routes or actual static files
+    // Don't serve index.html for API routes, actual static files, or special files
     if (req.originalUrl.startsWith('/api/') || 
         req.originalUrl.startsWith('/assets/') ||
-        req.originalUrl.includes('.')) {
+        req.originalUrl.startsWith('/sitemap') ||
+        req.originalUrl.startsWith('/robots.txt') ||
+        req.originalUrl.startsWith('/sw.js') ||
+        req.originalUrl.startsWith('/manifest.json') ||
+        req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp)$/)) {
       return res.status(404).send('Not Found');
     }
     
+    res.setHeader('Content-Type', 'text/html');
     res.sendFile(path.resolve(publicPath, "index.html"), (err) => {
       if (err) {
         console.error('Error serving index.html:', err);
