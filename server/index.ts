@@ -22,6 +22,7 @@ if (process.env.NODE_ENV === 'development') {
 
 import express, { type Request, Response, NextFunction } from "express";
 import path from "path";
+import { WebSocketServer } from "ws";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cookieSession from "cookie-session";
@@ -154,6 +155,30 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  const wss = new WebSocketServer({ server });
+
+  wss.on("connection", (socket, req) => {
+    console.log("✅ WebSocket client connected:", req.url);
+
+    // If you send token in ?token=, parse it here
+    try {
+      const url = new URL(req.url || "", `http://${req.headers.host}`);
+      const token = url.searchParams.get("token");
+      console.log("Token received:", token);
+    } catch (e) {
+      console.error("Token parse error", e);
+    }
+
+    socket.on("message", (msg) => {
+      console.log("📩 message:", msg.toString());
+      socket.send("Echo: " + msg.toString());
+    });
+
+    socket.on("close", () => {
+      console.log("❌ WebSocket client disconnected");
+    });
+  });
+
 
   // Start Discord bot for economy rewards
   startDiscordBot();
@@ -226,41 +251,16 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '5000', 10);
+  const port = parseInt(process.env.PORT || "5000", 10);
 
-  // Graceful shutdown handling
-  const gracefulShutdown = (signal: string) => {
-    log(`Received ${signal}. Graceful shutdown...`);
-    server.close(() => {
-      log('Server closed.');
-      process.exit(0);
-    });
-  };
-
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: false, // Changed to false to prevent multiple instances
-  }, () => {
-    log(`serving on port ${port}`);
-  }).on('error', (error: any) => {
-    if (error.code === 'EADDRINUSE') {
-      console.log(`Port ${port} is already in use. Attempting to kill existing process...`);
-      killExistingServer();
-      setTimeout(() => {
-        server.listen({
-          port,
-          host: "0.0.0.0",
-          reusePort: false,
-        }, () => {
-          log(`serving on port ${port} after cleanup`);
-        });
-      }, 2000);
-    } else {
-      throw error;
+  server.listen(
+    {
+      port,
+      host: "0.0.0.0",
+      reusePort: false,
+    },
+    () => {
+      log(`🚀 HTTP+WS server running on port ${port}`);
     }
-  });
+  );
 })();
