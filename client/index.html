@@ -33,7 +33,6 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#7C3AED">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Axiom">
 
@@ -94,6 +93,40 @@
             });
         });
       }
+    </script>
+
+    <!-- WebSocket connection for real-time updates -->
+    <script>
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      const wsUrl = `${protocol}//${host}/?token=XYrJQ2Z4WE1J`;
+
+      function setupWebSocket(url) {
+        try {
+          const ws = new WebSocket(url);
+
+          ws.onopen = () => {
+            console.log('WebSocket connected');
+          };
+
+          ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+          };
+
+          ws.onclose = () => {
+            console.log('WebSocket disconnected, attempting to reconnect...');
+            setTimeout(() => setupWebSocket(wsUrl), 5000);
+          };
+
+          return ws;
+        } catch (error) {
+          console.error('Failed to create WebSocket:', error);
+          return null;
+        }
+      }
+
+      // Initialize WebSocket connection
+      let ws = setupWebSocket(wsUrl);
     </script>
 
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
