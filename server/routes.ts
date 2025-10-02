@@ -322,25 +322,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         includeNormalAdvertising: true
       });
 
-      // TODO: Add back support for language, timezone, activity filters in storage.getServers
-      // For now, filter here to maintain existing functionality
-      let filteredServers = serverList;
-
-      const language = req.query.language as string;
-      const timezone = req.query.timezone as string;
-      const activity = req.query.activity as string;
-
-      if (language) {
-        filteredServers = filteredServers.filter(server => server.language === language);
-      }
-      if (timezone) {
-        filteredServers = filteredServers.filter(server => server.timezone === timezone);
-      }
-      if (activity) {
-        filteredServers = filteredServers.filter(server => server.activityLevel === activity);
-      }
-
-      res.json(filteredServers);
+      res.json(serverList);
     } catch (error) {
       console.error("Error fetching servers:", error);
       res.status(500).json({ message: "Failed to fetch servers" });
@@ -353,8 +335,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const servers = await storage.getPopularServers(parseInt(limit as string));
       // Filter to include normal advertising and non-advertising servers, exclude member-exchange
       const popularServers = servers.filter(server =>
-        !server.isAdvertising ||
-        (server.isAdvertising && server.advertisingType !== "member_exchange")
+        !server.advertisingType ||
+        (server.advertisingType && server.advertisingType !== "member_exchange")
       );
       res.json(popularServers);
     } catch (error) {
@@ -1062,7 +1044,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Server not found" });
       }
 
-      const discordGuildId = serverData.discordId;
+      const discordGuildId = serverData.serverId;
       if (!discordGuildId) {
         return res.status(400).json({ message: "Server Discord ID not found" });
       }
@@ -1104,7 +1086,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         serverId,
         coinsToAward,
         currentCoins: userForTransaction?.coins || 0,
-        advertisingMembersNeeded: serverForTransaction?.advertisingMembersNeeded || 0,
+        advertisingMembersNeeded: 0,
       });
 
       // Get fresh user data after transaction
@@ -1198,12 +1180,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         serverData = await storage.createServer({
           name: userGuild.name,
           description: userGuild.description || `${userGuild.name} Discord Server`,
-          discordId: serverId,
+          serverId: serverId,
           ownerId: userId,
           memberCount: userGuild.approximate_member_count || 0,
           tags: [],
-          inviteCode: '',
-          isAdvertising: false,
+          inviteLink: '',
+          category: 'general',
           advertisingType: 'none',
         });
       }
@@ -1213,10 +1195,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await Promise.all([
         storage.updateUserCoins(userId, newCoinBalance),
         storage.updateServer(serverData.id, {
-          isAdvertising: true,
-          advertisingMembersNeeded: members,
           advertisingUserId: userId,
-          advertisingType: "member_exchange", // Set as member-exchange advertising
+          advertisingType: "member_exchange",
+          advertisingExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         }),
       ]);
 
@@ -1292,10 +1273,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await Promise.all([
         storage.updateUserCoins(userId, newCoinBalance),
         storage.updateServer(serverId, {
-          isAdvertising: true,
-          advertisingMembersNeeded: members,
           advertisingUserId: userId,
-          advertisingType: "member_exchange", // Set as member-exchange advertising
+          advertisingType: "member_exchange",
+          advertisingExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         }),
       ]);
 
@@ -2271,7 +2251,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const ticket = await storage.createSupportTicket({
         userId: userId,
-        discordUserId: user.discordId,
         username: user.username,
         message: message.trim(),
         status: 'open',
