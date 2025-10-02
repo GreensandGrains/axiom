@@ -97,45 +97,41 @@
 
     <!-- WebSocket connection for real-time updates -->
     <script>
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host;
-      const token = "XYrJQ2Z4WE1J";
+  const token = "XYrJQ2Z4WE1J";
 
-// Use Railway URL in production, localhost only when testing locally
-      const WS_URL =
-        window.location.hostname === "localhost"
-    ? `ws://localhost:3001/?token=${token}`   // adjust your local port
-    : `wss://axiom-ad.up.railway.app/?token=${token}`;
+  // Use Railway URL in production, localhost only when testing locally
+  const WS_URL =
+    window.location.hostname === "localhost"
+      ? `ws://localhost:3001/?token=${token}`   // adjust your local port if different
+      : `wss://axiom-ad.up.railway.app/?token=${token}`;
 
-      const ws = new WebSocket(WS_URL);
+  function setupWebSocket(url) {
+    try {
+      const ws = new WebSocket(url);
 
-      function setupWebSocket(url) {
-        try {
-          const ws = new WebSocket(url);
+      ws.onopen = () => {
+        console.log('✅ WebSocket connected');
+      };
 
-          ws.onopen = () => {
-            console.log('WebSocket connected');
-          };
+      ws.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+      };
 
-          ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-          };
+      ws.onclose = () => {
+        console.warn('⚠️ WebSocket disconnected, retrying in 5s...');
+        setTimeout(() => setupWebSocket(url), 5000); // use correct variable
+      };
 
-          ws.onclose = () => {
-            console.log('WebSocket disconnected, attempting to reconnect...');
-            setTimeout(() => setupWebSocket(wsUrl), 5000);
-          };
+      return ws;
+    } catch (error) {
+      console.error('Failed to create WebSocket:', error);
+      return null;
+    }
+  }
 
-          return ws;
-        } catch (error) {
-          console.error('Failed to create WebSocket:', error);
-          return null;
-        }
-      }
-
-      // Initialize WebSocket connection
-      let ws = setupWebSocket(wsUrl);
-    </script>
+  // Initialize WebSocket connection
+  let ws = setupWebSocket(WS_URL);
+</script>
 
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
   </body>
