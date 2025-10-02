@@ -99,7 +99,15 @@
     <script>
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/?token=XYrJQ2Z4WE1J`;
+      const token = "XYrJQ2Z4WE1J";
+
+// Use Railway URL in production, localhost only when testing locally
+      const WS_URL =
+        window.location.hostname === "localhost"
+    ? `ws://localhost:3001/?token=${token}`   // adjust your local port
+    : `wss://axiom-ad.up.railway.app/?token=${token}`;
+
+      const ws = new WebSocket(WS_URL);
 
       function setupWebSocket(url) {
         try {
