@@ -1,10 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { useLocation } from 'wouter';
 
 export function useAppState() {
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
+  const [isLoading, setIsLoading] = React.useState(false);
   const [location] = useLocation();
 
   // Handle online/offline detection
