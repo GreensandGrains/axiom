@@ -45,7 +45,12 @@ import {
   validateReview
 } from "./middleware/security";
 import crypto from "crypto";
-import { generateSitemap } from "./sitemap";
+import Stripe from "stripe";
+
+// Initialize Stripe
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2023-10-16",
+});
 
 declare global {
   namespace Express {
@@ -97,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/discord", (req, res) => {
-    const clientId = process.env.DISCORD_CLIENT_ID || "1418600262938923220";
+    const clientId = process.env.DISCORD_CLIENT_ID || "1372226433191247983";
     const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
     const redirectUri = `${protocol}://${req.get('host')}/api/auth/discord/callback`;
     const scope = 'identify email guilds';
@@ -182,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     delete session.oauthTimestamp;
 
     try {
-      const clientId = process.env.DISCORD_CLIENT_ID || "1418600262938923220";
+      const clientId = process.env.DISCORD_CLIENT_ID || "1372226433191247983";
       const clientSecret = process.env.DISCORD_CLIENT_SECRET;
       const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
       const redirectUri = `${protocol}://${req.get('host')}/api/auth/discord/callback`;
@@ -241,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUserByDiscordId(discordUser.id);
 
       // Check if this is the admin user using username
-      const ADMIN_USERNAMES = ['axiom_2401', 'aetherflux_002']; // Add more admin usernames here
+      const ADMIN_USERNAMES = ['aetherflux_002']; // Add more admin usernames here
       const isAdminUser = ADMIN_USERNAMES.includes(discordUser.username);
 
       if (!user) {
@@ -284,7 +289,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('User logged in with persistent session (1 year)');
 
       // Redirect to home - cookie-session automatically saves
-      res.redirect('/');
+      res.redirect('/?auth=success');
 
 
     } catch (error) {
@@ -298,6 +303,120 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.session = null;
     res.redirect('/');
   });
+
+  // Payment endpoints
+  app.post("/api/create-payment-intent", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const { amount, type, coins, serverId, boostType } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ message: "Valid amount required" });
+      }
+
+      // Create payment intent with metadata
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100), // Convert to cents
+        currency: "usd",
+        metadata: {
+          userId: req.user.id,
+          type: type || "coins", // "coins", "24hour_boost", "1month_boost"
+          coins: coins?.toString() || "0",
+          serverId: serverId || "",
+          boostType: boostType || ""
+        },
+      });
+
+      res.json({ clientSecret: paymentIntent.client_secret });
+    } catch (error: any) {
+      console.error("Payment intent creation error:", error);
+      res.status(500).json({ message: "Error creating payment intent: " + error.message });
+    }
+  });
+
+  app.post("/api/payment-success", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const { paymentIntentId } = req.body;
+
+      if (!paymentIntentId) {
+        return res.status(400).json({ message: "Payment intent ID required" });
+      }
+
+      // Retrieve payment intent from Stripe to verify completion
+      const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+      if (paymentIntent.status !== 'succeeded') {
+        return res.status(400).json({ message: "Payment not completed" });
+      }
+
+      const metadata = paymentIntent.metadata;
+      const userId = metadata.userId;
+
+      // Verify user matches session
+      if (userId !== req.user.id) {
+        return res.status(403).json({ message: "Payment user mismatch" });
+      }
+
+      // Handle different purchase types
+      if (metadata.type === "coins") {
+        const coins = parseInt(metadata.coins) || 0;
+        if (coins > 0) {
+          await storage.addCoins(userId, coins);
+        }
+
+        res.json({
+          message: `Successfully added ${coins} coins to your account!`,
+          type: "coins",
+          coins
+        });
+      } else if (metadata.type === "24hour_boost" || metadata.type === "1month_boost") {
+        const serverId = metadata.serverId;
+        const boostType = metadata.type === "24hour_boost" ? "24hours" : "1month";
+
+        if (serverId) {
+          await storage.boostServer(serverId, userId, boostType);
+
+          res.json({
+            message: `Successfully boosted your server for ${boostType === "24hours" ? "24 hours" : "1 month"}!`,
+            type: "boost",
+            boostType,
+            serverId
+          });
+        } else {
+          res.status(400).json({ message: "Server ID required for boost" });
+        }
+      } else {
+        res.status(400).json({ message: "Unknown purchase type" });
+      }
+
+    } catch (error: any) {
+      console.error("Payment success handling error:", error);
+      res.status(500).json({ message: "Error processing payment: " + error.message });
+    }
+  });
+
+  app.get("/api/user-servers", async (req, res) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const userServers = await storage.getServersByUser(req.user.id);
+      res.json(userServers);
+    } catch (error) {
+      console.error("Error fetching user servers:", error);
+      res.status(500).json({ message: "Failed to fetch user servers" });
+    }
+  });
+
+  // Categories
 
   // Server routes
   app.get("/api/servers", async (req, res) => {
@@ -322,7 +441,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         includeNormalAdvertising: true
       });
 
-      res.json(serverList);
+      // TODO: Add back support for language, timezone, activity filters in storage.getServers
+      // For now, filter here to maintain existing functionality
+      let filteredServers = serverList;
+
+      const language = req.query.language as string;
+      const timezone = req.query.timezone as string;
+      const activity = req.query.activity as string;
+
+      if (language) {
+        filteredServers = filteredServers.filter(server => server.language === language);
+      }
+      if (timezone) {
+        filteredServers = filteredServers.filter(server => server.timezone === timezone);
+      }
+      if (activity) {
+        filteredServers = filteredServers.filter(server => server.activityLevel === activity);
+      }
+
+      res.json(filteredServers);
     } catch (error) {
       console.error("Error fetching servers:", error);
       res.status(500).json({ message: "Failed to fetch servers" });
@@ -335,8 +472,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const servers = await storage.getPopularServers(parseInt(limit as string));
       // Filter to include normal advertising and non-advertising servers, exclude member-exchange
       const popularServers = servers.filter(server =>
-        !server.advertisingType ||
-        (server.advertisingType && server.advertisingType !== "member_exchange")
+        !server.isAdvertising ||
+        (server.isAdvertising && server.advertisingType !== "member_exchange")
       );
       res.json(popularServers);
     } catch (error) {
@@ -1044,7 +1181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Server not found" });
       }
 
-      const discordGuildId = serverData.serverId;
+      const discordGuildId = serverData.discordId;
       if (!discordGuildId) {
         return res.status(400).json({ message: "Server Discord ID not found" });
       }
@@ -1086,7 +1223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         serverId,
         coinsToAward,
         currentCoins: userForTransaction?.coins || 0,
-        advertisingMembersNeeded: 0,
+        advertisingMembersNeeded: serverForTransaction?.advertisingMembersNeeded || 0,
       });
 
       // Get fresh user data after transaction
@@ -1180,12 +1317,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         serverData = await storage.createServer({
           name: userGuild.name,
           description: userGuild.description || `${userGuild.name} Discord Server`,
-          serverId: serverId,
+          discordId: serverId,
           ownerId: userId,
           memberCount: userGuild.approximate_member_count || 0,
           tags: [],
-          inviteLink: '',
-          category: 'general',
+          inviteCode: '',
+          isAdvertising: false,
           advertisingType: 'none',
         });
       }
@@ -1195,9 +1332,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await Promise.all([
         storage.updateUserCoins(userId, newCoinBalance),
         storage.updateServer(serverData.id, {
+          isAdvertising: true,
+          advertisingMembersNeeded: members,
           advertisingUserId: userId,
-          advertisingType: "member_exchange",
-          advertisingExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          advertisingType: "member_exchange", // Set as member-exchange advertising
         }),
       ]);
 
@@ -1273,9 +1411,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await Promise.all([
         storage.updateUserCoins(userId, newCoinBalance),
         storage.updateServer(serverId, {
+          isAdvertising: true,
+          advertisingMembersNeeded: members,
           advertisingUserId: userId,
-          advertisingType: "member_exchange",
-          advertisingExpiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          advertisingType: "member_exchange", // Set as member-exchange advertising
         }),
       ]);
 
@@ -1336,171 +1475,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.status(500).json({ message: "Failed to transfer coins" });
-    }
-  });
-
-  // Analytics routes
-  app.get("/api/analytics", requireAuth, async (req, res) => {
-    try {
-      const { range = "7d", category = "all" } = req.query;
-
-      const analytics = {
-        totalViews: 15420,
-        uniqueVisitors: 3240,
-        serverJoins: 842,
-        botInvites: 567,
-        topServers: [
-          { id: "1", name: "Gaming Central", category: "Gaming", views: 1250 },
-          { id: "2", name: "Study Group", category: "Education", views: 980 },
-          { id: "3", name: "Art Community", category: "Creative", views: 750 },
-        ],
-        growth: {
-          engagement: 18,
-          servers: 12,
-          bots: 25,
-        }
-      };
-
-      res.json(analytics);
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
-      res.status(500).json({ message: "Failed to fetch analytics" });
-    }
-  });
-
-  // Moderation routes
-  app.get("/api/moderation/reports", requireAdmin, async (req, res) => {
-    try {
-      const reports = [
-        {
-          id: "1",
-          title: "Inappropriate server content",
-          description: "Server contains NSFW content without proper labeling",
-          type: "content",
-          status: "pending",
-          reporterUsername: "user123",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          title: "Spam bot behavior",
-          description: "Bot is sending unsolicited messages",
-          type: "behavior",
-          status: "pending",
-          reporterUsername: "moderator456",
-          createdAt: new Date().toISOString(),
-        }
-      ];
-
-      res.json(reports);
-    } catch (error) {
-      console.error("Error fetching reports:", error);
-      res.status(500).json({ message: "Failed to fetch reports" });
-    }
-  });
-
-  app.get("/api/moderation/stats", requireAdmin, async (req, res) => {
-    try {
-      const stats = {
-        totalReports: 45,
-        pendingReports: 8,
-        reportsToday: 3,
-        actionsToday: 5,
-        avgResponseTime: "2h",
-      };
-
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching moderation stats:", error);
-      res.status(500).json({ message: "Failed to fetch moderation stats" });
-    }
-  });
-
-  app.patch("/api/moderation/reports/:id", requireAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { action, reason } = req.body;
-
-      // Process moderation action here
-      console.log(`Moderation action ${action} applied to report ${id}: ${reason}`);
-
-      res.json({ success: true, message: "Moderation action completed" });
-    } catch (error) {
-      console.error("Error processing moderation action:", error);
-      res.status(500).json({ message: "Failed to process moderation action" });
-    }
-  });
-
-  // Notifications routes
-  app.get("/api/notifications", requireAuth, async (req, res) => {
-    try {
-      const notifications = [
-        {
-          id: "1",
-          title: "Quest Completed!",
-          message: "You've completed the 'Join Server' quest and earned 2 coins!",
-          type: "quest",
-          priority: "normal",
-          read: false,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          title: "Server Featured",
-          message: "Your server 'Gaming Hub' has been featured on the homepage!",
-          type: "system",
-          priority: "high",
-          read: false,
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: "3",
-          title: "New Bot Review",
-          message: "Your bot submission has received a new review.",
-          type: "email",
-          priority: "normal",
-          read: true,
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-        }
-      ];
-
-      res.json(notifications);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      res.status(500).json({ message: "Failed to fetch notifications" });
-    }
-  });
-
-  app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log(`Marking notification ${id} as read for user ${req.user!.id}`);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      res.status(500).json({ message: "Failed to mark notification as read" });
-    }
-  });
-
-  app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log(`Deleting notification ${id} for user ${req.user!.id}`);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting notification:", error);
-      res.status(500).json({ message: "Failed to delete notification" });
-    }
-  });
-
-  app.patch("/api/notifications/settings", requireAuth, async (req, res) => {
-    try {
-      const settings = req.body;
-      console.log(`Updating notification settings for user ${req.user!.id}:`, settings);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error updating notification settings:", error);
-      res.status(500).json({ message: "Failed to update notification settings" });
     }
   });
 
@@ -2251,6 +2225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const ticket = await storage.createSupportTicket({
         userId: userId,
+        discordUserId: user.discordId,
         username: user.username,
         message: message.trim(),
         status: 'open',
@@ -2650,8 +2625,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const search = req.query.search as string;
       const category = req.query.category as string;
       // Admin can see all FAQs, regular users only see active ones
-      const isActive = req.user?.isAdmin ?
-        (req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined) :
+      const isActive = req.user?.isAdmin ? 
+        (req.query.isActive !== undefined ? req.query.isActive === 'true' : undefined) : 
         true;
 
       const faqs = await storage.getFaqs({
@@ -2746,7 +2721,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Regular users can only see their own tickets, admins can see all
       const options = req.user.isAdmin ? { status, limit, offset } : { userId: req.user.id, status, limit, offset };
-
+      
       const tickets = await storage.getSupportTickets(options);
       res.json(tickets);
     } catch (error) {
@@ -2779,23 +2754,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const bot = req.body;
       const { discordBot } = await import('./discord-bot');
-
+      
       if (discordBot && discordBot.isReady()) {
         const ADMIN_CHANNEL_ID = "1234567890"; // Replace with actual admin channel ID
-
+        
         const embed = new (await import('discord.js')).EmbedBuilder()
           .setTitle('🤖 New Bot Submission')
           .setColor('#7C3AED')
           .addFields(
             { name: '🤖 Bot Name', value: bot.name, inline: true },
             { name: '👤 Owner', value: bot.ownerId, inline: true },
-            // Extract client ID from bot token if DISCORD_CLIENT_ID is not set
-            // This ensures the invite link is correct even if DISCORD_CLIENT_ID is missing
-            (() => {
-              const clientId = process.env.DISCORD_CLIENT_ID || (process.env.DISCORD_BOT_TOKEN ? process.env.DISCORD_BOT_TOKEN.split('.')[0] : "1418600262938923220");
-              const botInviteUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands`;
-              return { name: '🔗 Invite Link', value: botInviteUrl, inline: false };
-            })(),
+            { name: '🔗 Invite Link', value: bot.inviteUrl, inline: false },
             { name: '📝 Description', value: bot.description.substring(0, 1000), inline: false }
           )
           .setTimestamp();
@@ -2806,13 +2775,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const channel = await discordBot.channels.fetch(ADMIN_CHANNEL_ID);
         if (channel && channel.isTextBased()) {
-          await channel.send({
+          await channel.send({ 
             content: '📋 **New bot submission for review!**\n\n*Use `/accept botid:' + bot.id + ' user:@owner action:accept/decline` to process.*',
-            embeds: [embed]
+            embeds: [embed] 
           });
         }
       }
-
+      
       res.json({ success: true });
     } catch (error) {
       console.error('Discord notification error:', error);
@@ -2840,66 +2809,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SEO and Sitemap routes
-  app.get("/sitemap.xml", generateSitemap);
-
-  app.get("/robots.txt", (req, res) => {
-    res.type('text/plain');
-    res.send(`User-agent: *
-Allow: /
-
-Sitemap: https://axiom-discord.replit.app/sitemap.xml
-
-Crawl-delay: 1
-
-Disallow: /admin
-Disallow: /payment/
-Disallow: /profile
-Disallow: /your-servers
-Disallow: /your-bots`);
-  });
-
-  // Google verification file route
-  app.get("/google9fd896c9fede5b13.html", (req, res) => {
-    res.type('text/plain');
-    res.send('google-site-verification: google9fd896c9fede5b13.html');
-  });
-
-  // Alternative verification file route
-  app.get("/google-site-verification.txt", (req, res) => {
-    res.type('text/plain');
-    res.send('google-site-verification: google9fd896c9fede5b13.html');
-  });
-
-  // Open Graph image route for better social sharing
-  app.get("/api/og-image/:type/:id", async (req, res) => {
-    try {
-      const { type, id } = req.params;
-
-      // Generate dynamic OG images based on content
-      let data;
-      if (type === 'server') {
-        data = await db.select().from(servers).where(eq(servers.id, parseInt(id))).limit(1);
-      } else if (type === 'bot') {
-        data = await db.select().from(bots).where(eq(bots.id, parseInt(id))).limit(1);
-      }
-
-      if (!data || data.length === 0) {
-        return res.status(404).json({ message: "Content not found" });
-      }
-
-      // Return structured data for OG tags
-      res.json({
-        title: data[0].name || data[0].title,
-        description: data[0].description,
-        image: data[0].iconUrl || data[0].imageUrl || '/assets/axiom-logo.png',
-        url: `https://axiom-discord.replit.app/${type}/${id}`
-      });
-    } catch (error) {
-      console.error("Error generating OG data:", error);
-      res.status(500).json({ message: "Failed to generate OG data" });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;
