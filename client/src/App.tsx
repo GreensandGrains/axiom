@@ -1,4 +1,5 @@
 import { Switch, Route, Router } from "wouter";
+import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -8,6 +9,7 @@ import { NavigationProvider } from "@/contexts/navigation-context";
 import { Suspense, lazy } from "react";
 import LoadingPage from "@/components/loading-page";
 import OfflinePage from "@/components/offline-page";
+import { useAppState } from "@/hooks/use-app-state";
 import CookieConsent from "@/components/cookie-consent";
 
 // Lazy load components for better performance and reload handling
@@ -112,7 +114,11 @@ function App() {
       <TooltipProvider>
         <NavigationProvider>
           <Toaster />
-          <>
+          <CookieConsent />
+          {!isOnline ? (
+            <OfflinePage />
+          ) : (
+            <>
               <AppRouter />
               {isLoading && <LoadingPage />}
             </>
