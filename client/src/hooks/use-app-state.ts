@@ -1,14 +1,13 @@
-
 import * as React from 'react';
 import { useLocation } from 'wouter';
 
 export function useAppState() {
-  const [isOnline, setIsOnline] = React.useState(navigator.onLine);
-  const [isLoading, setIsLoading] = React.useState(false);
+  const [isOnline, setIsOnline] = React.useState<boolean>(navigator.onLine);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [location] = useLocation();
 
   // Handle online/offline detection
-  useEffect(() => {
+  React.useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -22,7 +21,7 @@ export function useAppState() {
   }, []);
 
   // Handle loading state for route changes
-  useEffect(() => {
+  React.useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
@@ -34,6 +33,6 @@ export function useAppState() {
   return {
     isOnline,
     isLoading,
-    setIsLoading
+    location,
   };
 }
