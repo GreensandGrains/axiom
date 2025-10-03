@@ -1,6 +1,27 @@
 import dotenv from 'dotenv';
+// Load environment variables first
 dotenv.config();
+
+import { checkRunningInstance, createPidFile, killExistingServer } from './process-manager';
+
+// Handle development restarts more gracefully
+if (process.env.NODE_ENV === 'development') {
+  // Kill any existing server and create new PID file
+  killExistingServer();
+  setTimeout(() => {
+    createPidFile();
+  }, 1000);
+} else {
+  // Check if another instance is already running in production
+  if (checkRunningInstance()) {
+    console.log('Server is already running. Exiting...');
+    process.exit(0);
+  }
+  createPidFile();
+}
+
 import express, { type Request, Response, NextFunction } from "express";
+import path from "path";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import cookieSession from "cookie-session";
@@ -32,8 +53,9 @@ declare global {
 }
 
 // Set default Discord Client ID if not provided
-if (!process.env.DISCORD_CLIENT_ID) {
-  process.env.DISCORD_CLIENT_ID = "1418600262938923220";
+// Extract Discord Client ID from bot token if not explicitly set
+if (!process.env.DISCORD_CLIENT_ID && process.env.DISCORD_BOT_TOKEN) {
+  process.env.DISCORD_CLIENT_ID = process.env.DISCORD_BOT_TOKEN.split('.')[0];
 }
 
 const app = express();
@@ -61,7 +83,7 @@ app.set('trust proxy', 1);
 // Cookie-based session middleware for truly persistent login (survives server restarts)
 app.use(cookieSession({
   name: 'smartserve.sid',
-  keys: [process.env.SESSION_SECRET || 'smartserve-static-secret-key-for-persistent-sessions-v1'],
+  keys: [process.env.SESSION_SECRET || 'axiom-static-secret-key-for-persistent-sessions-v1'],
   maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year for truly persistent login
   secure: process.env.NODE_ENV === 'production', // Auto-secure in production
   httpOnly: true, // Better security - prevents XSS attacks  
@@ -135,7 +157,7 @@ app.use((req, res, next) => {
 
   // Start Discord bot for economy rewards
   startDiscordBot();
-  
+
   // Start Quest Bot for notifications and channel management
   try {
     import('./quest-bot');
@@ -163,19 +185,82 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
+    // In production, disable Vite's client-side WebSocket
+    app.use((req, res, next) => {
+      res.setHeader('X-Vite-Ignore', 'true');
+      next();
+    });
     serveStatic(app);
   }
+  // SPA fallback - serve index.html for all non-API routes
+  // This must come AFTER all API routes and static file serving
+  app.get('*', (req, res, next) => {
+    // Don't interfere with API routes, static assets, or special files
+    if (req.path.startsWith('/api/') || 
+        req.path.startsWith('/assets/') ||
+        req.path.startsWith('/sitemap') ||
+        req.path.startsWith('/robots.txt') ||
+        req.path.startsWith('/sw.js') ||
+        req.path.startsWith('/manifest.json') ||
+        req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp)$/)) {
+      return next();
+    }
+
+    // For production, serve the built index.html for all SPA routes
+    if (app.get("env") !== "development") {
+      res.setHeader('Content-Type', 'text/html');
+      res.sendFile(path.resolve(process.cwd(), 'dist/public/index.html'), (err) => {
+        if (err) {
+          console.error('Error serving index.html:', err);
+          res.status(500).send('Internal Server Error');
+        }
+      });
+    } else {
+      // In development, Vite handles this
+      next();
+    }
+  });
+
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+
+  // Graceful shutdown handling
+  const gracefulShutdown = (signal: string) => {
+    log(`Received ${signal}. Graceful shutdown...`);
+    server.close(() => {
+      log('Server closed.');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
   server.listen({
     port,
     host: "0.0.0.0",
-    reusePort: true,
+    reusePort: false, // Changed to false to prevent multiple instances
   }, () => {
     log(`serving on port ${port}`);
+  }).on('error', (error: any) => {
+    if (error.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is already in use. Attempting to kill existing process...`);
+      killExistingServer();
+      setTimeout(() => {
+        server.listen({
+          port,
+          host: "0.0.0.0",
+          reusePort: false,
+        }, () => {
+          log(`serving on port ${port} after cleanup`);
+        });
+      }, 2000);
+    } else {
+      throw error;
+    }
   });
 })();
