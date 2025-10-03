@@ -106,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/auth/discord", (req, res) => {
     const clientId = process.env.DISCORD_CLIENT_ID || "1418600262938923220";
     const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
-    const redirectUri = `${protocol}://${req.get('host')}/api/auth/discord/callback`;
+    const redirectUri = `https://axiomad.up.railway.app/api/auth/discord/callback`;
     const scope = 'identify email guilds';
     const rememberMe = req.query.remember === 'true';
 
