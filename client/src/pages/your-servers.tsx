@@ -14,13 +14,6 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import type { Server } from "@shared/schema";
 
-// Placeholder for Input component if it's not globally available
-// If Input is a custom component, ensure it's imported correctly.
-// For this example, assuming it's available or a simple input is intended.
-// const Input = ({ id, value, onChange, placeholder, className }) => (
-//   <input id={id} value={value} onChange={onChange} placeholder={placeholder} className={className} />
-// );
-
 export default function YourServers() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
@@ -78,12 +71,12 @@ export default function YourServers() {
       console.log(`Checking bot presence for server: ${server.name} (${server.discordId || server.id})`);
       const guildId = server.discordId || server.id;
       const response = await fetch(`/api/discord/bot-check/${guildId}`);
-
+      
       let data;
       if (response.ok) {
         data = await response.json();
         console.log(`Bot check result:`, data);
-
+        
         if (data.botPresent) {
           // Bot is present, redirect to add-server page
           console.log(`✅ Bot is present in ${server.name}, redirecting to add-server`);
@@ -98,41 +91,41 @@ export default function YourServers() {
           botPresent: false,
           checkMethod: "http_error",
           errorDetails: errorData.message,
-          inviteUrl: `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_BOT_CLIENT_ID || '1418600262938923220'}&permissions=8&integration_type=0&scope=bot+applications.commands`
+          inviteUrl: `https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&scope=bot%20applications.commands&guild_id=${guildId}`
         };
       }
-
+      
       // Bot is not present or there was an error, show modal with details
       console.log(`❌ Bot is NOT present in ${server.name} (${data.checkMethod}), showing invite modal`);
       if (data.errorDetails) {
         console.log(`Error details: ${data.errorDetails}`);
       }
-
+      
       setSelectedServer(server);
-      setBotInviteUrl(`https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_BOT_CLIENT_ID || '1418600262938923220'}&permissions=8&integration_type=0&scope=bot+applications.commands`);
+      setBotInviteUrl(data.inviteUrl);
       setShowBotModal(true);
-
+      
     } catch (error) {
       console.error('Error checking bot presence:', error);
       // Fallback: show modal to invite bot
       console.log(`❌ Fallback: showing invite modal for ${server.name}`);
       setSelectedServer(server);
-      setBotInviteUrl(`https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&integration_type=0&scope=bot+applications.commands`);
+      setBotInviteUrl(`https://discord.com/oauth2/authorize?client_id=1418600262938923220&permissions=8&scope=bot%20applications.commands&guild_id=${server.discordId || server.id}`);
       setShowBotModal(true);
     }
   };
 
   const handleRetryBotCheck = async () => {
     if (!selectedServer) return;
-
+    
     try {
       console.log(`Retrying bot check for server: ${selectedServer.name}`);
       const response = await fetch(`/api/discord/bot-check/${selectedServer.id}`);
       if (!response.ok) throw new Error("Failed to check bot presence");
-
+      
       const data = await response.json();
       console.log(`Retry bot check result:`, data);
-
+      
       if (data.botPresent) {
         console.log(`Bot is now present in ${selectedServer.name}!`);
         setShowBotModal(false);
@@ -174,7 +167,7 @@ export default function YourServers() {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-
+      
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -283,7 +276,7 @@ export default function YourServers() {
                       </div>
                     </div>
                   </CardHeader>
-
+                  
                   <CardContent className="space-y-4">
                     {/* Stats */}
                     <div className="flex items-center justify-between text-sm">
@@ -359,7 +352,7 @@ export default function YourServers() {
                     </div>
                   </CardContent>
                 </Card>
-
+                
                 {/* Advertise Button */}
                 <div className="relative mt-3">
                   <Button
@@ -385,7 +378,7 @@ export default function YourServers() {
             <p className="text-muted-foreground mb-8 max-w-md mx-auto">
               You don't have any servers listed on Smart Serve yet. Add your first server to get started!
             </p>
-            <Link href="/add-server">
+            <Link href="/advertise-server">
               <Button 
                 className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600"
                 data-testid="button-add-first-server"
@@ -406,18 +399,18 @@ export default function YourServers() {
               Bot Not Found!
             </DialogTitle>
           </DialogHeader>
-
+          
           <div className="space-y-6 text-center">
             <div className="w-16 h-16 mx-auto bg-gradient-to-br from-red-500 to-orange-500 rounded-xl flex items-center justify-center">
               <Bot className="w-8 h-8 text-white" />
             </div>
-
+            
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-foreground">
-                Axiom Bot Required
+                Smart Serve Bot Required
               </h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Our Axiom bot is not present in <span className="font-semibold text-purple-400">{selectedServer?.name}</span>. 
+                Our Smart Serve bot is not present in <span className="font-semibold text-purple-400">{selectedServer?.name}</span>. 
                 You must invite the bot first before you can advertise this server.
               </p>
               <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-3 mt-4">
@@ -429,17 +422,14 @@ export default function YourServers() {
 
             <div className="space-y-3">
               <Button
-                onClick={() => {
-                  const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID || "1418600262938923220";
-                  window.open(`https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&integration_type=0&scope=bot+applications.commands`);
-                }}
+                onClick={() => window.open(botInviteUrl, '_blank')}
                 className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-3"
                 data-testid="button-invite-bot-to-server"
               >
                 <ExternalLink className="w-4 h-4 mr-2" />
                 Invite Bot Now
               </Button>
-
+              
               <Button
                 onClick={handleRetryBotCheck}
                 variant="outline"
@@ -449,7 +439,7 @@ export default function YourServers() {
                 <i className="fas fa-refresh mr-2"></i>
                 Check Again
               </Button>
-
+              
               <Button
                 onClick={() => setShowBotModal(false)}
                 variant="outline"
@@ -477,7 +467,7 @@ export default function YourServers() {
               Server Settings
             </DialogTitle>
           </DialogHeader>
-
+          
           {selectedServer && (
             <div className="space-y-6">
               <div className="flex items-center space-x-3">
