@@ -68,43 +68,18 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(process.cwd(), "dist");
-  const publicPath = path.resolve(distPath, "public");
+  const distPath = path.resolve(import.meta.dirname, "public");
 
-  if (!fs.existsSync(publicPath)) {
+  if (!fs.existsSync(distPath)) {
     throw new Error(
-      `Could not find the build directory: ${publicPath}, make sure to build the client first.`,
+      `Could not find the build directory: ${distPath}, make sure to build the client first`,
     );
   }
 
-  // Serve static files from the public directory with proper caching
-  app.use(express.static(publicPath, {
-    fallthrough: true,
-    index: false,
-    maxAge: '1d', // Cache static assets for 1 day
-    etag: true,
-    lastModified: true
-  }));
+  app.use(express.static(distPath));
 
-  // Handle SPA routing - serve index.html for all non-static routes
-  app.use("*", (req, res) => {
-    // Don't serve index.html for API routes, actual static files, or special files
-    if (req.originalUrl.startsWith('/api/') || 
-        req.originalUrl.startsWith('/assets/') ||
-        req.originalUrl.startsWith('/sitemap') ||
-        req.originalUrl.startsWith('/robots.txt') ||
-        req.originalUrl.startsWith('/sw.js') ||
-        req.originalUrl.startsWith('/manifest.json') ||
-        req.originalUrl.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp)$/)) {
-      return res.status(404).send('Not Found');
-    }
-    
-    res.setHeader('Content-Type', 'text/html');
-    res.sendFile(path.resolve(publicPath, "index.html"), (err) => {
-      if (err) {
-        console.error('Error serving index.html:', err);
-        res.status(500).send('Internal Server Error');
-      }
-    });
+  // fall through to index.html if the file doesn't exist
+  app.use("*", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

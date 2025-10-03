@@ -127,7 +127,7 @@ async function registerCommands() {
   }
 }
 
-client.once('clientReady', async () => {
+client.once('ready', async () => {
   console.log(`✅ Quest Bot logged in as ${client.user?.tag}!`);
   await initDatabase();
   await registerCommands();

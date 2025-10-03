@@ -45,7 +45,6 @@ import {
   validateReview
 } from "./middleware/security";
 import crypto from "crypto";
-import { generateSitemap } from "./sitemap";
 
 declare global {
   namespace Express {
@@ -97,7 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/auth/discord", (req, res) => {
-    const clientId = process.env.DISCORD_CLIENT_ID || "1418600262938923220";
+    const clientId = process.env.DISCORD_CLIENT_ID || "1372226433191247983";
     const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
     const redirectUri = `${protocol}://${req.get('host')}/api/auth/discord/callback`;
     const scope = 'identify email guilds';
@@ -182,7 +181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     delete session.oauthTimestamp;
 
     try {
-      const clientId = process.env.DISCORD_CLIENT_ID || "1418600262938923220";
+      const clientId = process.env.DISCORD_CLIENT_ID || "1372226433191247983";
       const clientSecret = process.env.DISCORD_CLIENT_SECRET;
       const protocol = req.secure || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
       const redirectUri = `${protocol}://${req.get('host')}/api/auth/discord/callback`;
@@ -241,7 +240,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let user = await storage.getUserByDiscordId(discordUser.id);
 
       // Check if this is the admin user using username
-      const ADMIN_USERNAMES = ['axiom_2401', 'aetherflux_002']; // Add more admin usernames here
+      const ADMIN_USERNAMES = ['aetherflux_002']; // Add more admin usernames here
       const isAdminUser = ADMIN_USERNAMES.includes(discordUser.username);
 
       if (!user) {
@@ -284,7 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('User logged in with persistent session (1 year)');
 
       // Redirect to home - cookie-session automatically saves
-      res.redirect('/');
+      res.redirect('/?auth=success');
 
 
     } catch (error) {
@@ -1356,171 +1355,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.status(500).json({ message: "Failed to transfer coins" });
-    }
-  });
-
-  // Analytics routes
-  app.get("/api/analytics", requireAuth, async (req, res) => {
-    try {
-      const { range = "7d", category = "all" } = req.query;
-
-      const analytics = {
-        totalViews: 15420,
-        uniqueVisitors: 3240,
-        serverJoins: 842,
-        botInvites: 567,
-        topServers: [
-          { id: "1", name: "Gaming Central", category: "Gaming", views: 1250 },
-          { id: "2", name: "Study Group", category: "Education", views: 980 },
-          { id: "3", name: "Art Community", category: "Creative", views: 750 },
-        ],
-        growth: {
-          engagement: 18,
-          servers: 12,
-          bots: 25,
-        }
-      };
-
-      res.json(analytics);
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
-      res.status(500).json({ message: "Failed to fetch analytics" });
-    }
-  });
-
-  // Moderation routes
-  app.get("/api/moderation/reports", requireAdmin, async (req, res) => {
-    try {
-      const reports = [
-        {
-          id: "1",
-          title: "Inappropriate server content",
-          description: "Server contains NSFW content without proper labeling",
-          type: "content",
-          status: "pending",
-          reporterUsername: "user123",
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          title: "Spam bot behavior",
-          description: "Bot is sending unsolicited messages",
-          type: "behavior",
-          status: "pending",
-          reporterUsername: "moderator456",
-          createdAt: new Date().toISOString(),
-        }
-      ];
-
-      res.json(reports);
-    } catch (error) {
-      console.error("Error fetching reports:", error);
-      res.status(500).json({ message: "Failed to fetch reports" });
-    }
-  });
-
-  app.get("/api/moderation/stats", requireAdmin, async (req, res) => {
-    try {
-      const stats = {
-        totalReports: 45,
-        pendingReports: 8,
-        reportsToday: 3,
-        actionsToday: 5,
-        avgResponseTime: "2h",
-      };
-
-      res.json(stats);
-    } catch (error) {
-      console.error("Error fetching moderation stats:", error);
-      res.status(500).json({ message: "Failed to fetch moderation stats" });
-    }
-  });
-
-  app.patch("/api/moderation/reports/:id", requireAdmin, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { action, reason } = req.body;
-
-      // Process moderation action here
-      console.log(`Moderation action ${action} applied to report ${id}: ${reason}`);
-
-      res.json({ success: true, message: "Moderation action completed" });
-    } catch (error) {
-      console.error("Error processing moderation action:", error);
-      res.status(500).json({ message: "Failed to process moderation action" });
-    }
-  });
-
-  // Notifications routes
-  app.get("/api/notifications", requireAuth, async (req, res) => {
-    try {
-      const notifications = [
-        {
-          id: "1",
-          title: "Quest Completed!",
-          message: "You've completed the 'Join Server' quest and earned 2 coins!",
-          type: "quest",
-          priority: "normal",
-          read: false,
-          createdAt: new Date().toISOString(),
-        },
-        {
-          id: "2",
-          title: "Server Featured",
-          message: "Your server 'Gaming Hub' has been featured on the homepage!",
-          type: "system",
-          priority: "high",
-          read: false,
-          createdAt: new Date(Date.now() - 86400000).toISOString(),
-        },
-        {
-          id: "3",
-          title: "New Bot Review",
-          message: "Your bot submission has received a new review.",
-          type: "email",
-          priority: "normal",
-          read: true,
-          createdAt: new Date(Date.now() - 172800000).toISOString(),
-        }
-      ];
-
-      res.json(notifications);
-    } catch (error) {
-      console.error("Error fetching notifications:", error);
-      res.status(500).json({ message: "Failed to fetch notifications" });
-    }
-  });
-
-  app.patch("/api/notifications/:id/read", requireAuth, async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log(`Marking notification ${id} as read for user ${req.user!.id}`);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error marking notification as read:", error);
-      res.status(500).json({ message: "Failed to mark notification as read" });
-    }
-  });
-
-  app.delete("/api/notifications/:id", requireAuth, async (req, res) => {
-    try {
-      const { id } = req.params;
-      console.log(`Deleting notification ${id} for user ${req.user!.id}`);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error deleting notification:", error);
-      res.status(500).json({ message: "Failed to delete notification" });
-    }
-  });
-
-  app.patch("/api/notifications/settings", requireAuth, async (req, res) => {
-    try {
-      const settings = req.body;
-      console.log(`Updating notification settings for user ${req.user!.id}:`, settings);
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error updating notification settings:", error);
-      res.status(500).json({ message: "Failed to update notification settings" });
     }
   });
 
@@ -2810,13 +2644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .addFields(
             { name: '🤖 Bot Name', value: bot.name, inline: true },
             { name: '👤 Owner', value: bot.ownerId, inline: true },
-            // Extract client ID from bot token if DISCORD_CLIENT_ID is not set
-            // This ensures the invite link is correct even if DISCORD_CLIENT_ID is missing
-            (() => {
-              const clientId = process.env.DISCORD_CLIENT_ID || (process.env.DISCORD_BOT_TOKEN ? process.env.DISCORD_BOT_TOKEN.split('.')[0] : "1418600262938923220");
-              const botInviteUrl = `https://discord.com/oauth2/authorize?client_id=${clientId}&permissions=8&scope=bot%20applications.commands`;
-              return { name: '🔗 Invite Link', value: botInviteUrl, inline: false };
-            })(),
+            { name: '🔗 Invite Link', value: bot.inviteUrl, inline: false },
             { name: '📝 Description', value: bot.description.substring(0, 1000), inline: false }
           )
           .setTimestamp();
@@ -2861,66 +2689,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // SEO and Sitemap routes
-  app.get("/sitemap.xml", generateSitemap);
-
-  app.get("/robots.txt", (req, res) => {
-    res.type('text/plain');
-    res.send(`User-agent: *
-Allow: /
-
-Sitemap: https://axiom-discord.replit.app/sitemap.xml
-
-Crawl-delay: 1
-
-Disallow: /admin
-Disallow: /payment/
-Disallow: /profile
-Disallow: /your-servers
-Disallow: /your-bots`);
-  });
-
-  // Google verification file route
-  app.get("/google9fd896c9fede5b13.html", (req, res) => {
-    res.type('text/plain');
-    res.send('google-site-verification: google9fd896c9fede5b13.html');
-  });
-
-  // Alternative verification file route
-  app.get("/google-site-verification.txt", (req, res) => {
-    res.type('text/plain');
-    res.send('google-site-verification: google9fd896c9fede5b13.html');
-  });
-
-  // Open Graph image route for better social sharing
-  app.get("/api/og-image/:type/:id", async (req, res) => {
-    try {
-      const { type, id } = req.params;
-
-      // Generate dynamic OG images based on content
-      let data;
-      if (type === 'server') {
-        data = await db.select().from(servers).where(eq(servers.id, parseInt(id))).limit(1);
-      } else if (type === 'bot') {
-        data = await db.select().from(bots).where(eq(bots.id, parseInt(id))).limit(1);
-      }
-
-      if (!data || data.length === 0) {
-        return res.status(404).json({ message: "Content not found" });
-      }
-
-      // Return structured data for OG tags
-      res.json({
-        title: data[0].name || data[0].title,
-        description: data[0].description,
-        image: data[0].iconUrl || data[0].imageUrl || '/assets/axiom-logo.png',
-        url: `https://axiom-discord.replit.app/${type}/${id}`
-      });
-    } catch (error) {
-      console.error("Error generating OG data:", error);
-      res.status(500).json({ message: "Failed to generate OG data" });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;

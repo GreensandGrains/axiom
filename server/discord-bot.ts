@@ -509,15 +509,14 @@ client.on('interactionCreate', async (interaction) => {
           await interaction.reply({ embeds: [embed] });
 
           // Send bot profile with invite link
-          const botInviteUrl = `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID || "1418600262938923220"}&permissions=8&scope=bot%20applications.commands`;
           const botProfileEmbed = new EmbedBuilder()
             .setTitle(`Bot Profile: ${bot.name}`)
             .setDescription(`${bot.description}`)
             .setColor('#7289DA')
             .addFields(
-              { name: 'Invite Link', value: bot.inviteLink || botInviteUrl }
+              { name: 'Invite Link', value: bot.inviteLink }
             )
-            .setFooter({ text: `Provided by Smart Serve` });
+            .setFooter({ text: `Provided by Bot Owner` });
 
           const owner = await client.users.fetch(botOwnerId);
           try {
@@ -1087,9 +1086,9 @@ client.on('GuildMemberAdd', async (member) => {
 
 // Quest tracking for member join events
 client.on('guildMemberAdd', async (member) => {
-  // Use your actual server's guild ID from environment or default
-  const serverGuildId = process.env.MAIN_SERVER_GUILD_ID || "1416385340922658838";
-  if (member.guild.id !== serverGuildId) return;
+  // Only process joins for our main server
+  const MAIN_SERVER_ID = "1416385340922658838";
+  if (member.guild.id !== MAIN_SERVER_ID) return;
 
   try {
     // Find user by Discord ID
@@ -1140,7 +1139,7 @@ client.on('guildMemberAdd', async (member) => {
     // Send notification to quest bot channel if configured
     try {
       const { sendQuestNotification } = await import('./quest-bot');
-      await sendQuestNotification(serverGuildId, user.discordId, {
+      await sendQuestNotification(MAIN_SERVER_ID, user.discordId, {
         questId: "join-server",
         questName: "Join Server",
         reward: coinsEarned,
@@ -1175,9 +1174,9 @@ client.on('guildMemberAdd', async (member) => {
 
 // Handle server boost events
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
-  // Use your actual server's guild ID from environment or default
-  const serverGuildId = process.env.MAIN_SERVER_GUILD_ID || "1416385340922658838";
-  if (newMember.guild.id !== serverGuildId) return;
+  // Only process boosts for our main server
+  const MAIN_SERVER_ID = "1416385340922658838";
+  if (newMember.guild.id !== MAIN_SERVER_ID) return;
 
   try {
     // Check if user started boosting
