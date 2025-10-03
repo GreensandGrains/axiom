@@ -1,5 +1,5 @@
 import { Switch, Route, Router } from "wouter";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -57,60 +57,7 @@ function AppRouter() {
   const { user } = useAuth();
   
   return (
-    <Router hook={() => {
-      // Custom hook to handle page reloads and navigation properly
-    const [location, setLocation] = /*  */useState(window.location.pathname + window.location.search);
-      
-      useEffect(() => {
-        const handlePopState = () => {
-          const newPath = window.location.pathname + window.location.search;
-          setLocation(newPath);
-        };
-        
-        const handleLocationChange = () => {
-          const newPath = window.location.pathname + window.location.search;
-          if (newPath !== location) {
-            setLocation(newPath);
-          }
-        };
-        
-        // Listen to both popstate and custom navigation events
-        window.addEventListener('popstate', handlePopState);
-        window.addEventListener('pushstate', handleLocationChange);
-        window.addEventListener('replacestate', handleLocationChange);
-        
-        // Override pushState and replaceState to trigger custom events
-        const originalPushState = history.pushState;
-        const originalReplaceState = history.replaceState;
-        
-        history.pushState = function(...args) {
-          originalPushState.apply(history, args);
-          window.dispatchEvent(new Event('pushstate'));
-        };
-        
-        history.replaceState = function(...args) {
-          originalReplaceState.apply(history, args);
-          window.dispatchEvent(new Event('replacestate'));
-        };
-        
-        return () => {
-          window.removeEventListener('popstate', handlePopState);
-          window.removeEventListener('pushstate', handleLocationChange);
-          window.removeEventListener('replacestate', handleLocationChange);
-          history.pushState = originalPushState;
-          history.replaceState = originalReplaceState;
-        };
-      }, [location]);
-      
-      return [location, (to: string, options?: { replace?: boolean }) => {
-        if (options?.replace) {
-          history.replaceState({}, '', to);
-        } else {
-          history.pushState({}, '', to);
-        }
-        setLocation(to);
-      }];
-    }}>
+    <Router>
       <Suspense fallback={<LoadingPage />}>
         <Switch>
           <Route path="/" component={Home} />
